@@ -18,13 +18,11 @@
 	}
 
 	/*Route class*/
-	function State(route, shared, lastProcedureRoute, isWaitingForSignal, signal, ready){
+	function State(route, shared, lastProcedureRoute, isWaitingForSignal){
 		this.route = route
 		this.shared = shared
 		this.lastProcedureRoute = lastProcedureRoute
 		this.isWaitingForSignal = isWaitingForSignal
-		this.signal = signal
-		this.ready = ready
 	}
 
 	/*It gets the first attribute name of the object informed*/
@@ -125,23 +123,20 @@
 
 	//Start signal listener process
 	function startSignalListener(moduleName, sequenceName){
-		var sequenceState = jSequential.modules[moduleName].sequences[sequenceName].state
+		var currentSequence = jSequential.modules[moduleName].sequences[sequenceName]
 		var loop = setInterval(function(){
-			if ((!sequenceState.ready) || 
-				((sequenceState.signal !== null) && (sequenceState.signal !== undefined) && (jSequential.state.ready))){
+			if ((!currentSequence.state.route) || ((currentSequence.signalChannel != null) && (jSequential.state.ready))){
 				clearInterval(loop)
-				if (!sequenceState.ready){
+				if (!currentSequence.state.route){
 					if (jSequential.modules[moduleName].config.debugMode) showDebugMessage("Signal listener was abruptly interrupted (" + moduleName + ":" + sequenceName + ")", " ")
 				} else {
-					if (jSequential.modules[moduleName].config.debugMode) showDebugMessage("Roger! (" + moduleName + ":" + sequenceName + "): ", sequenceState.signal)
-					sequenceState.shared.$ = sequenceState.signal
-					sequenceState.signal = null
-					sequenceState.isWaitingForSignal = false
+					if (jSequential.modules[moduleName].config.debugMode) showDebugMessage("Roger! (" + moduleName + ":" + sequenceName + "): ", currentSequence.signalChannel)
+					currentSequence.state.shared.$ = currentSequence.signalChannel
+					currentSequence.signalChannel = null
+					currentSequence.state.isWaitingForSignal = false
 				}
 
-				if (sequenceState.route){
-					jSequential.modules[moduleName].sequences[sequenceName].run(sequenceState)
-				}
+				jSequential.modules[moduleName].sequences[sequenceName].run(currentSequence.state)
 			}
 		}, DEFAULT_DELAY)
 	}
@@ -154,7 +149,7 @@
 					message = "Empty message"
 				}
 				if (jSequential.modules[moduleName].config.debugMode) showDebugMessage("Signal sent (" + moduleName + ":" + sequenceName + "): ", message)
-				jSequential.modules[moduleName].sequences[sequenceName].state.signal = message
+				jSequential.modules[moduleName].sequences[sequenceName].signalChannel = message
 			},
 			getObjectSnapshot: getObjectSnapshot
 		}
@@ -210,10 +205,11 @@
 				sequence: function(sequenceName){
 					var currentSequence = currentModule.sequences[sequenceName]
 					var initialRoute = new Route(0, 0)
-					var initialState = new State(initialRoute, {$: undefined}, null, false, null, true)
+					var initialState = new State(initialRoute, {$: undefined}, null, false)
 					var sequence = {
 						events: document.createDocumentFragment(),
 						state: initialState,
+						signalChannel: null,
 						instructions: [],
 						run: function(lastState){
 							setTimeout(function(){
@@ -235,117 +231,111 @@
 										}
 									}
 
-									if(currentSequence.state.ready){
+									//It checks the intructions syntax
+									var resultSyntaxCheck = checkInstructionsSyntax(currentSequence.instructions, currentModule.procedures)
+									if ((currentSequence.state.route) &&
+										(resultSyntaxCheck === true)){ //It executes only route is different from null
+										//-------------------//
+										//-----Listeners-----//
+										//-------------------//
+										var listener = document.createDocumentFragment() //Disposable element used to listen last command terminated event
+										listener.addEventListener(LAST_COMMAND_TERMINATED, function(){ //It listens for last command terminated event
+											currentModule.sequences[sequenceName].run(currentSequence.state)
+											//console.log("Last command terminated")
+										})
+
+										//-------------------//
+										//--Command Handler--//
+										//-------------------//
+
 										//It redirects the route to the last procedure route if it was waiting for the signal before page has reloaded
 										if(currentSequence.state.isWaitingForSignal){
 											currentSequence.state.isWaitingForSignal = false
 											currentSequence.state.route = currentSequence.state.lastProcedureRoute
 										}
 
-										//It checks the intructions syntax
-										var resultSyntaxCheck = checkInstructionsSyntax(currentSequence.instructions, currentModule.procedures)
-										if ((currentSequence.state.route) &&
-											(resultSyntaxCheck === true)){ //It executes only route is different from null
-											//-------------------//
-											//-----Listeners-----//
-											//-------------------//
-											var listener = document.createDocumentFragment() //Disposable element used to listen last command terminated event
-											listener.addEventListener(LAST_COMMAND_TERMINATED, function(){ //It listens for last command terminated event
-												currentModule.sequences[sequenceName].run(currentSequence.state)
-												//console.log("Last command terminated")
-											})
+										var currentCommand = getCommandByRoute(currentSequence.instructions, currentSequence.state.route)
+										var nextRoute = getNextRoute(currentSequence.instructions, currentSequence.state.route)
 
-											//-------------------//
-											//--Command Handler--//
-											//-------------------//
-											var currentCommand = getCommandByRoute(currentSequence.instructions, currentSequence.state.route)
-											var nextRoute = getNextRoute(currentSequence.instructions, currentSequence.state.route)
-
-											switch(typeof(currentCommand)){
-												case 'object': //It handles internal object commands
-													switch(Object.keys(currentCommand)[0]){
-														case WAIT_COMMAND:
-															if (currentCommand[WAIT_COMMAND] == WAIT_FOR_THE_SIGNAL_FLAG){
-																currentSequence.state.isWaitingForSignal = true
-																currentSequence.state.route = nextRoute
-																startSignalListener(moduleName, sequenceName) //It starts the signal listener
-																if (currentModule.config.debugMode) showDebugMessage("Waiting for the signal " + "(" + moduleName + ":" + sequenceName + ")", " ")
-															} else {
-																//It waits for the especified time until dispatching last command event
-																var timeToWait = evaluateExpression(currentCommand[WAIT_COMMAND], currentSequence.state.shared)
-																if (currentModule.config.debugMode) showDebugMessage("Waiting " + timeToWait + " ms (" + moduleName + ":" + sequenceName + ")", " ")
-																var waitCount = 0
-																var loop = setInterval(function(){
-																	waitCount++
-																	if ((!currentSequence.state.ready) ||
-																		(waitCount >= timeToWait/DEFAULT_DELAY)){
-																		clearInterval(loop)
-																		if (!currentSequence.state.ready){
-																			if (currentModule.config.debugMode) showDebugMessage("Wait process was abruptly interrupted (" + moduleName + ":" + sequenceName + ")", " ")
-																		} else {
-																			currentSequence.state.route = nextRoute
-																		}
-																		listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
+										switch(typeof(currentCommand)){
+											case 'object': //It handles internal object commands
+												switch(Object.keys(currentCommand)[0]){
+													case WAIT_COMMAND:
+														if (currentCommand[WAIT_COMMAND] == WAIT_FOR_THE_SIGNAL_FLAG){
+															currentSequence.state.isWaitingForSignal = true
+															currentSequence.state.route = nextRoute
+															startSignalListener(moduleName, sequenceName) //It starts the signal listener
+															if (currentModule.config.debugMode) showDebugMessage("Waiting for the signal " + "(" + moduleName + ":" + sequenceName + ")", " ")
+														} else {
+															//It waits for the especified time until dispatching last command event
+															var timeToWait = evaluateExpression(currentCommand[WAIT_COMMAND], currentSequence.state.shared)
+															if (currentModule.config.debugMode) showDebugMessage("Waiting " + timeToWait + " ms (" + moduleName + ":" + sequenceName + ")", " ")
+															var waitCount = 0
+															var loop = setInterval(function(){
+																waitCount++
+																if ((!currentSequence.state.route) ||
+																	(waitCount >= timeToWait/DEFAULT_DELAY)){
+																	clearInterval(loop)
+																	if (!currentSequence.state.route){
+																		if (currentModule.config.debugMode) showDebugMessage("Wait process was abruptly interrupted (" + moduleName + ":" + sequenceName + ")", " ")
+																	} else {
+																		currentSequence.state.route = nextRoute
 																	}
-																}, DEFAULT_DELAY)
-															}
-															break
-														case GOTOIF_COMMAND:
-															if (evaluateExpression(currentCommand[GOTOIF_COMMAND][0], currentSequence.state.shared)){
-																if (currentModule.config.debugMode) showDebugMessage("Gotoif returned true (" + moduleName + ":" + sequenceName + ")", " ")
-																if (currentCommand[GOTOIF_COMMAND][1] != EXIT_COMMAND){
-																	var redirect = currentCommand[GOTOIF_COMMAND][1]
-																	currentSequence.state.route.command = 0
-																	currentSequence.state.route.instruction = getInstructionPosByLabel(currentCommand[GOTOIF_COMMAND][1], currentSequence.instructions)
-																} else dispatchExitCommand(moduleName, sequenceName)
-															} else {
-																if (currentModule.config.debugMode) showDebugMessage("Gotoif returned false (" + moduleName + ":" + sequenceName + ")", " ")
-																if (currentCommand[GOTOIF_COMMAND].length > 2){
-																	if (currentCommand[GOTOIF_COMMAND][2] != EXIT_COMMAND){
-																		var redirect = currentCommand[GOTOIF_COMMAND][2]
-																		currentSequence.state.route.command = 0
-																		currentSequence.state.route.instruction = getInstructionPosByLabel(currentCommand[GOTOIF_COMMAND][2], currentSequence.instructions)
-																	} else dispatchExitCommand(moduleName, sequenceName)
+																	listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
 																}
+															}, DEFAULT_DELAY)
+														}
+														break
+													case GOTOIF_COMMAND:
+														if (evaluateExpression(currentCommand[GOTOIF_COMMAND][0], currentSequence.state.shared)){
+															if (currentModule.config.debugMode) showDebugMessage("Gotoif returned true (" + moduleName + ":" + sequenceName + ")", " ")
+															if (currentCommand[GOTOIF_COMMAND][1] != EXIT_COMMAND){
+																var redirect = currentCommand[GOTOIF_COMMAND][1]
+																currentSequence.state.route.command = 0
+																currentSequence.state.route.instruction = getInstructionPosByLabel(currentCommand[GOTOIF_COMMAND][1], currentSequence.instructions)
+															} else dispatchExitCommand(moduleName, sequenceName)
+														} else {
+															if (currentModule.config.debugMode) showDebugMessage("Gotoif returned false (" + moduleName + ":" + sequenceName + ")", " ")
+															if (currentCommand[GOTOIF_COMMAND].length > 2){
+																if (currentCommand[GOTOIF_COMMAND][2] != EXIT_COMMAND){
+																	var redirect = currentCommand[GOTOIF_COMMAND][2]
+																	currentSequence.state.route.command = 0
+																	currentSequence.state.route.instruction = getInstructionPosByLabel(currentCommand[GOTOIF_COMMAND][2], currentSequence.instructions)
+																} else dispatchExitCommand(moduleName, sequenceName)
 															}
-															if (redirect){
-																if (currentModule.config.debugMode) showDebugMessage("Flow redirected to \"" + redirect + "\" (" + moduleName + ":" + sequenceName + ")", " ")
-															}
-															listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
-															break
-														default: break
-													}
-													break
-												default: //Ir handles custom procedure commands and _exit
-													if (currentCommand != EXIT_COMMAND){
-														currentSequence.state.lastProcedureRoute = new Route(currentSequence.state.route.instruction, currentSequence.state.route.command)
-														currentSequence.state.route = nextRoute
-														if (currentModule.config.debugMode) showDebugMessage("Running procedure", "\"" + moduleName + ":" + sequenceName + ":" + currentCommand + "\"")
-														//setTimeout makes asynchronous calls to prevent stack growing
-														setTimeout(function(){
-															currentSequence.state.shared.$ = currentModule.procedures[currentCommand](currentSequence.state.shared, getSharedFunctions(moduleName, sequenceName)) //It executes defined procedure strictly speaking
-															listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
-														}, 0)
-													} else {
-														dispatchExitCommand(moduleName, sequenceName)
+														}
+														if (redirect){
+															if (currentModule.config.debugMode) showDebugMessage("Flow redirected to \"" + redirect + "\" (" + moduleName + ":" + sequenceName + ")", " ")
+														}
 														listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
-													}
-													break
-											}
-											
-										} else {
-											if (resultSyntaxCheck !== true) throwErrorNotification(resultSyntaxCheck + " (" + moduleName + ":" + sequenceName + ")", " ")
-											if (currentSequence.state.route == null) {
-												currentSequence.state.ready = false
-												if (currentModule.config.debugMode) showDebugMessage("Sequence is terminated (" + moduleName + ":" + sequenceName + ")", " ")
-												currentSequence.events.dispatchEvent(getEvent(SEQUENCE_TERMINATED)) //It says that sequence is terminated
-											}
-											
+														break
+													default: break
+												}
+												break
+											default: //Ir handles custom procedure commands and _exit
+												if (currentCommand != EXIT_COMMAND){
+													currentSequence.state.lastProcedureRoute = new Route(currentSequence.state.route.instruction, currentSequence.state.route.command)
+													currentSequence.state.route = nextRoute
+													if (currentModule.config.debugMode) showDebugMessage("Running procedure", "\"" + moduleName + ":" + sequenceName + ":" + currentCommand + "\"")
+													//setTimeout makes asynchronous calls to prevent stack growing
+													setTimeout(function(){
+														currentSequence.state.shared.$ = currentModule.procedures[currentCommand](currentSequence.state.shared, getSharedFunctions(moduleName, sequenceName)) //It executes defined procedure strictly speaking
+														listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
+													}, 0)
+												} else {
+													dispatchExitCommand(moduleName, sequenceName)
+													listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
+												}
+												break
 										}
-
+										
 									} else {
-										if (currentModule.config.debugMode) showDebugMessage("Sequence is not ready: The sequence is terminated or it was blocked on run time (" + moduleName + ":" + sequenceName + ")", " ")
-										currentSequence.events.dispatchEvent(getEvent(SEQUENCE_TERMINATED)) //It says that sequence is terminated
+										if (resultSyntaxCheck !== true) throwErrorNotification(resultSyntaxCheck + " (" + moduleName + ":" + sequenceName + ")", " ")
+										if (currentSequence.state.route == null) {
+											if (currentModule.config.debugMode) showDebugMessage("Sequence is terminated (" + moduleName + ":" + sequenceName + ")", " ")
+											currentSequence.events.dispatchEvent(getEvent(SEQUENCE_TERMINATED)) //It says that sequence is terminated
+										}
+										
 									}
 																			
 								} else {
@@ -355,10 +345,10 @@
 								
 						},
 						reset: function(){
-							currentSequence.state.ready = false
+							currentSequence.state.route = null //Reset sequence
 							setTimeout(function(){
-								routeReseted = new Route(0, 0)
-								currentSequence.state = new State(routeReseted, {$: undefined}, null, false, null, true) //Reset sequence
+								var routeReseted = new Route(0, 0)
+								currentSequence.state = new State(routeReseted, {$: undefined}, null, false) //Reset sequence
 								var localStorage = new jSequential.Storage(eval(STORAGE_NAME))
 								if (localStorage.get()) localStorage.reset() //Reset the local storage just in case
 								if (currentModule.config.debugMode) showDebugMessage("Sequence is reset (" + moduleName + ":" + sequenceName + ")", " ")
