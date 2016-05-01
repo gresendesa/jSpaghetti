@@ -2,9 +2,14 @@
 	/*Global constants*/
 	const LAST_COMMAND_TERMINATED = "lastCommandTerminated"
 	const PAGE_IS_ABOUT_TO_RELOAD = "beforeunload"
-	const EVENT_LAST_COMMAND_TERMINATED = new Event(LAST_COMMAND_TERMINATED)
-	const STORAGE_NAME = "\"cborg:\" + moduleName + \":\" + sequenceName"
-	const INTERNAL_COMMANDS_LIST = ["wait", "gotoif"]
+	const STORAGE_NAME = "\"jSequential:\" + moduleName + \":\" + sequenceName"
+	const INTERNAL_OBJECT_COMMANDS_LIST = ["wait", "gotoif"]
+
+	/*Route class*/
+	function Route(intruction, command){
+		this.instruction = intruction
+		this.command = command
+	}
 
 	/*It gets the first attribute name of the object informed*/
 	function getFirstAttribName(obj){
@@ -27,7 +32,7 @@
 	/*It returns next route*/
 	function getNextRoute(instructions, route){
 		var instructionCommands = getInstructionByRoute(instructions, route)
-		var nextRoute = {instruction: route.instruction, command: route.command}
+		var nextRoute = new Route(route.instruction, route.command)
 		if (route.command < instructionCommands.length - 1){
 			nextRoute.command += 1
 		} else if (route.instruction < instructions.length - 1){
@@ -50,35 +55,50 @@
 				switch(typeof(instructions[i][instructionLabel][z])){
 					case 'object':
 						var internalComName = getFirstAttribName(instructions[i][instructionLabel][z])
-						if (INTERNAL_COMMANDS_LIST.indexOf(internalComName) == -1) return "Internal command \"" + internalComName + "\" is undefined."
+						if (INTERNAL_OBJECT_COMMANDS_LIST.indexOf(internalComName) == -1) return "Internal command \"" + internalComName + "\" is undefined."
 						break
 					default:
 						var procedureName = instructions[i][instructionLabel][z]
-						if (!procedures.hasOwnProperty(procedureName)) return "Procedure \"" + procedureName + "\" is undefined."
+						if (!procedures.hasOwnProperty(procedureName) && (procedureName != "_exit")) return "Procedure \"" + procedureName + "\" is undefined."
 						break
 				}
 			}
 		}
-		return false
+		return true
+	}
+
+	//This function shows a custom message error on browser console
+	function throwErrorNotification(message, subject){
+		console.error("jSequential error: ", message, subject)
+	}
+
+	function showDebugMessage(message, subject){
+		console.log("jSequential debug: ", message, subject)
 	}
 
 	/*It listens for the reload page event. It save all sequences states before to reload page*/
 	window.addEventListener(PAGE_IS_ABOUT_TO_RELOAD, function(event){
-		for(var moduleName in cborg.modules){
-			for(var sequenceName in cborg.modules[moduleName].sequences){
-				var localStorage = new cborg.Storage(eval(STORAGE_NAME))
-				localStorage.set(cborg.modules[moduleName].sequences[sequenceName].state)
+		jSequential.state.ready = false
+		for(var moduleName in jSequential.modules){
+			for(var sequenceName in jSequential.modules[moduleName].sequences){
+				var localStorage = new jSequential.Storage(eval(STORAGE_NAME))
+				localStorage.set(jSequential.modules[moduleName].sequences[sequenceName].state)
 			}
 		}
-		console.log("Page Reloaded: All sequences saved")
 	})
 
 	/*Main framework object*/
-	var cborg = {
+	var jSequential = {
+		state: {
+			ready: true
+		},
 		modules: {}, //This object stores each module as a element
-		module: function(moduleName){ //This functionfile:///home/gresendesa/%C3%81rea%20de%20Trabalho/tomatojs/tomatonew/tomato.html returns the module object especified by moduleName
-			var currentModule = cborg.modules[moduleName]
+		module: function(moduleName){ //This function returns the module object especified by moduleName
+			var currentModule = jSequential.modules[moduleName]
 			var module = {
+				config: {
+					debugMode: false
+				},
 				sequences: {},
 				procedures: {},
 				procedure: function(procedureName, procedure){
@@ -86,48 +106,80 @@
 				},
 				sequence: function(sequenceName){
 					var currentSequence = currentModule.sequences[sequenceName]
+					var initialRoute = new Route(0, 0)
 					var sequence = {
 						state: {
 							shared: {$: null},
-							route: {instruction: 0, command: 0},
+							route: initialRoute,
 							lastProcedureRoute: null,
 							isWaitingForSignal: false
 						},
 						instructions: [],
 						run: function(lastState){
-							//-------------------//
-							//--Data recovering--//
-							//-------------------//
-							if (lastState){ //It recovers the last state if avaiable
-								currentSequence.state = lastState
-							} else { //If the last state is not avaiable then data is caught from storage
-								var localStorage = new cborg.Storage(eval(STORAGE_NAME)) //It sets the Storage object
-								var storedData = localStorage.get()
-								if (storedData){
-									currentSequence.state = storedData //Restore the stored data
+							if (jSequential.state.ready){
+								//-------------------//
+								//--Data recovering--//
+								//-------------------//
+								if (lastState){ //It recovers the last state if avaiable
+									currentSequence.state = lastState
+									if (currentModule.config.debugMode) showDebugMessage("Data recovered from last state (" + moduleName + ":" + sequenceName + "): ", currentSequence.state)
+								} else { //If the last state is not avaiable then data is caught from storage
+									var localStorage = new jSequential.Storage(eval(STORAGE_NAME)) //It sets the Storage object
+									var storedData = localStorage.get()
+									if (storedData){
+										currentSequence.state = storedData //Restore the stored data
+										if (currentModule.config.debugMode) showDebugMessage("Data recovered from local storage (" + moduleName + ":" + sequenceName + "): ", currentSequence.state)
+									} else {
+										if (currentModule.config.debugMode) showDebugMessage("Data recovered from initial state (" + moduleName + ":" + sequenceName + "): ", currentSequence.state)
+									}
 								}
+
+								//It checks the intructions syntax
+								var resultSyntaxCheck = checkInstructionsSyntax(currentSequence.instructions, currentModule.procedures)
+								if ((currentSequence.state.route) &&
+									(resultSyntaxCheck === true)){ //It executes only route is different from null
+									//-------------------//
+									//-----Listeners-----//
+									//-------------------//
+									var listener = document.createDocumentFragment() //Disposable element used to listen last command terminated event
+									listener.addEventListener(LAST_COMMAND_TERMINATED, function(){ //It listens for last command terminated event
+										currentModule.sequences[sequenceName].run(currentSequence.state)
+										//console.log("Last command terminated")
+									})
+
+									//-------------------//
+									//--Command Handler--//
+									//-------------------//
+									var lastCommandTerminatedEvent = new Event(LAST_COMMAND_TERMINATED)
+									var currentCommand = getCommandByRoute(currentSequence.instructions, currentSequence.state.route)
+									var nextRoute = getNextRoute(currentSequence.instructions, currentSequence.state.route)
+
+									switch(typeof(currentCommand)){
+										case 'object':
+											console.log("hey")
+											break
+										default:
+											if (currentCommand != "_exit"){
+												currentSequence.state.lastProcedureRoute = new Route(currentSequence.state.route.instruction, currentSequence.state.route.command)
+												currentSequence.state.route = nextRoute
+												if (currentModule.config.debugMode) showDebugMessage("Running procedure", "\"" + moduleName + ":" + sequenceName + ":" + currentCommand + "\"")
+												currentSequence.state.shared.$ = currentModule.procedures[currentCommand](currentSequence.state.shared) //It executes defined procedure strictly speaking
+												listener.dispatchEvent(lastCommandTerminatedEvent)
+											} else {
+												currentSequence.state.route = null
+												listener.dispatchEvent(lastCommandTerminatedEvent)
+												if (currentModule.config.debugMode) showDebugMessage("Exit command dispatched", " ")
+											}
+											break
+									}
+									
+								}
+								if (resultSyntaxCheck !== true) throwErrorNotification(resultSyntaxCheck, " ")
+								if ((currentSequence.state.route == null) && (currentModule.config.debugMode)) showDebugMessage("Sequence is terminated", " ")
+							} else {
+								if (currentModule.config.debugMode) showDebugMessage("Sequence is blocked, probably page is about to be reloaded", " ")
 							}
-							console.log(currentSequence.state)
-
-							//-------------------//
-							//-----Listeners-----//
-							//-------------------//
-							var listener = document.createDocumentFragment() //Disposable element used to listen last command terminated event
-							listener.addEventListener(LAST_COMMAND_TERMINATED, function(){ //It listens for last command terminated event
-								//clearInterval(reloadPageListener)
-								console.log("Last command terminated")
-							})
-
-							//-------------------//
-							//--Command Handler--//
-							//-------------------//
-							var currentCommand = getCommandByRoute(currentSequence.instructions, currentSequence.state.route)
-
-							//console.log(currentCommand)
-							console.log(getNextRoute(currentSequence.instructions, currentSequence.state.route))
-							console.log(checkInstructionsSyntax(currentSequence.instructions, currentModule.procedures))
-
-							listener.dispatchEvent(EVENT_LAST_COMMAND_TERMINATED)
+								
 						}
 					}
 					if (currentSequence == undefined){ //It defines a new sequence object if it do not exist yet
@@ -139,8 +191,8 @@
 				}
 			}
 			if (currentModule == undefined){ //It defines a new module if it do not exist yet
-				cborg.modules[moduleName] = module
-				currentModule = cborg.modules[moduleName]
+				jSequential.modules[moduleName] = module
+				currentModule = jSequential.modules[moduleName]
 			}
 			return currentModule
 		},
@@ -155,5 +207,5 @@
 		}
 	}
 
-	return $cborg = cborg
+	return $jSequential = jSequential
 })()
