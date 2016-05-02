@@ -71,6 +71,9 @@ Internal commands can change the script behavior.
 {"wait": "_forTheSignal"} //Wait until a signal is dispached
 ``` 
 ```js 
+{"wait": "_forPageToReload"} //Pause the sequence execution and resume after page is reloaded
+```
+```js 
 {"gotoif":["2 == 1", "step1", "labelX"]} // It redirects the program flow (In this case to the "labelX")
 ``` 
 
