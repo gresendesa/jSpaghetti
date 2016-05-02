@@ -7,7 +7,7 @@ jSpaghetti is a Javascript framework to build automation scripts with sequential
 
 ## Motivation
 
-The project came from the necessity of a easy way to write browser javascript bots. The project was generalized to cover other purposes, though.
+The project came from the necessity of an easy way to write browser javascript bots. The project was generalized to cover other purposes, though.
 
 ## Installation
 
