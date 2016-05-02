@@ -3,7 +3,7 @@ jSpaghetti
 
 ## Synopsis
 
-jSpaghetti is a Javascript framework to build automation scripts with sequential and declarative paradigm.
+jSpaghetti is a Javascript framework to build automation scripts with sequential and declarative programming paradigm.
 
 ## Motivation
 
