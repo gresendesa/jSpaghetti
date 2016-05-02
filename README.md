@@ -29,11 +29,11 @@ var moduleObject = $jSpaguetti.module("myModule")
 Procedures are custom functions to be used as a library for the sequences. Each module has its own procedures. 
 * Defining procedures
 ```js
-var $jSpaguetti.module("myModule").procedure("myProcedureFoo", function(){
+$jSpaguetti.module("myModule").procedure("myProcedureFoo", function(){
 	
 })
 
-var $jSpaguetti.module("myModule").procedure("myProcedureBar", function(){
+$jSpaguetti.module("myModule").procedure("myProcedureBar", function(){
 	
 })
 
@@ -41,11 +41,11 @@ var $jSpaguetti.module("myModule").procedure("myProcedureBar", function(){
 ```
 
 ### Sequences
-* Creating a new module
+A sequence provides a wrapped environment for the execution of the instructions. It manages the execution to provide a shared data between the procedures. The data is not lost when page is reloaded.
+* Creating a new sequence
 ```js
-var moduleObject = $jSpaguetti.module("myModule")
+var sequenceObject = $jSpaguetti.module("myModule").sequence("mySequenceBaz")
 ```
-
 
 #### Instructions
 
