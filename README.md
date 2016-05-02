@@ -107,3 +107,29 @@ $jSpaguetti.module("myModule").procedure("myProcedureBar").events.addEventListen
 	//Code something in here
 })
 ```
+
+### Examples
+
+```js
+var module = $jSpaguetti.module("myModule")
+
+module.procedure("A", function(){
+	console.log("brown fox jumps ")
+})
+module.procedure("B", function(){
+	console.log("over the lazy dog")
+})
+module.procedure("C", function(){
+	console.log("quick ")
+})
+
+var sequence = module.sequence("showPhrase") = [
+	{0: "C"},
+	{"foo": ["A", "B"]}
+]
+
+sequence.run()
+
+//Output: quick brown fox jumps over the lazy dog
+
+```
