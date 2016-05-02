@@ -22,10 +22,24 @@ This code can be also injected on the document page using tools like Greasemonke
 ### Modules
 * Creating a new module
 ```js
-var foo = $jSpaguetti.module("myModule")
+var moduleObject = $jSpaguetti.module("myModule")
+```
+
+### Procedures
+Procedures are custom functions to be used as a library for the sequences. Each module has its own procedures. 
+* Defining procedures
+```js
+var $jSpaguetti.module("myModule").procedure("myProcedure1", function([sharedData[, internalFunctions]]){
+	
+})
 ```
 
 ### Sequences
+* Creating a new module
+```js
+var moduleObject = $jSpaguetti.module("myModule")
+```
+
 
 #### Instructions
 
