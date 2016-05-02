@@ -70,7 +70,7 @@ Internal commands can change the script behavior.
 {"wait": "_forTheSignal"} //Wait until a signal is dispached
 ``` 
 ```js 
-{"gotoif":["2 == 1", "step1", "labelX"]} // It redirects the program flow
+{"gotoif":["2 == 1", "step1", "labelX"]} // It redirects the program flow (In this case to "labelX")
 ``` 
 
 #### Running
