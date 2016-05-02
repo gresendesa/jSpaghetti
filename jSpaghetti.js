@@ -3,7 +3,7 @@
 	const LAST_COMMAND_TERMINATED = "lastCommandTerminated"
 	const PAGE_IS_ABOUT_TO_RELOAD = "beforeunload"
 	const SEQUENCE_TERMINATED = "terminated"
-	const STORAGE_NAME = "\"jSequential:\" + moduleName + \":\" + sequenceName"
+	const STORAGE_NAME = "\"jSpaghetti:\" + moduleName + \":\" + sequenceName"
 	const EXIT_COMMAND = "_exit"
 	const GOTOIF_COMMAND = "gotoif"
 	const WAIT_COMMAND = "wait"
@@ -105,12 +105,12 @@
 
 	/*This function shows a custom message error on browser console*/
 	function throwErrorNotification(message, subject){
-		console.error("jSequential error: ", message, subject)
+		console.error("jSpaghetti error: ", message, subject)
 	}
 
 	/*This function show a custom message on browser console*/
 	function showDebugMessage(message, subject){
-		console.log("jSequential debug: ", message, subject)
+		console.log("jSpaghetti debug: ", message, subject)
 	}
 
 	/*This function evaluates a Tomato expression*/
@@ -123,20 +123,20 @@
 
 	//Start signal listener process
 	function startSignalListener(moduleName, sequenceName){
-		var currentSequence = jSequential.modules[moduleName].sequences[sequenceName]
+		var currentSequence = jSpaghetti.modules[moduleName].sequences[sequenceName]
 		var loop = setInterval(function(){
-			if ((!currentSequence.state.route) || ((currentSequence.signalChannel != null) && (jSequential.state.ready))){
+			if ((!currentSequence.state.route) || ((currentSequence.signalChannel != null) && (jSpaghetti.state.ready))){
 				clearInterval(loop)
 				if (!currentSequence.state.route){
-					if (jSequential.modules[moduleName].config.debugMode) showDebugMessage("Signal listener was abruptly interrupted (" + moduleName + ":" + sequenceName + ")", " ")
+					if (jSpaghetti.modules[moduleName].config.debugMode) showDebugMessage("Signal listener was abruptly interrupted (" + moduleName + ":" + sequenceName + ")", " ")
 				} else {
-					if (jSequential.modules[moduleName].config.debugMode) showDebugMessage("Roger! (" + moduleName + ":" + sequenceName + "): ", currentSequence.signalChannel)
+					if (jSpaghetti.modules[moduleName].config.debugMode) showDebugMessage("Roger! (" + moduleName + ":" + sequenceName + "): ", currentSequence.signalChannel)
 					currentSequence.state.shared.$ = currentSequence.signalChannel
 					currentSequence.signalChannel = null
 					currentSequence.state.isWaitingForSignal = false
 				}
 
-				jSequential.modules[moduleName].sequences[sequenceName].run(currentSequence.state)
+				jSpaghetti.modules[moduleName].sequences[sequenceName].run(currentSequence.state)
 			}
 		}, DEFAULT_DELAY)
 	}
@@ -148,8 +148,8 @@
 				if ((message === null) || (message === undefined)){
 					message = "Empty message"
 				}
-				if (jSequential.modules[moduleName].config.debugMode) showDebugMessage("Signal sent (" + moduleName + ":" + sequenceName + "): ", message)
-				jSequential.modules[moduleName].sequences[sequenceName].signalChannel = message
+				if (jSpaghetti.modules[moduleName].config.debugMode) showDebugMessage("Signal sent (" + moduleName + ":" + sequenceName + "): ", message)
+				jSpaghetti.modules[moduleName].sequences[sequenceName].signalChannel = message
 			},
 			getObjectSnapshot: getObjectSnapshot
 		}
@@ -157,8 +157,8 @@
 
 	/*It defines route as null and show a message*/
 	function dispatchExitCommand(moduleName, sequenceName){
-		jSequential.modules[moduleName].sequences[sequenceName].state.route = null
-		if (jSequential.modules[moduleName].config.debugMode) showDebugMessage("Exit command dispatched (" + moduleName + ":" + sequenceName + ")", " ")
+		jSpaghetti.modules[moduleName].sequences[sequenceName].state.route = null
+		if (jSpaghetti.modules[moduleName].config.debugMode) showDebugMessage("Exit command dispatched (" + moduleName + ":" + sequenceName + ")", " ")
 	}
 
 	/*It snapshots a object*/
@@ -170,11 +170,11 @@
 
 	/*It listens for the reload page event. It save all sequences states before to reload page*/
 	window.addEventListener(PAGE_IS_ABOUT_TO_RELOAD, function(event){
-		jSequential.state.ready = false
-		for(var moduleName in jSequential.modules){
-			for(var sequenceName in jSequential.modules[moduleName].sequences){
-				var localStorage = new jSequential.Storage(eval(STORAGE_NAME))
-				localStorage.set(jSequential.modules[moduleName].sequences[sequenceName].state)
+		jSpaghetti.state.ready = false
+		for(var moduleName in jSpaghetti.modules){
+			for(var sequenceName in jSpaghetti.modules[moduleName].sequences){
+				var localStorage = new jSpaghetti.Storage(eval(STORAGE_NAME))
+				localStorage.set(jSpaghetti.modules[moduleName].sequences[sequenceName].state)
 			}
 		}
 	})
@@ -186,13 +186,13 @@
 	}
 
 	/*Main framework object*/
-	var jSequential = {
+	var jSpaghetti = {
 		state: {
 			ready: true
 		},
 		modules: {}, //This object stores each module as a element
 		module: function(moduleName){ //This function returns the module object especified by moduleName
-			var currentModule = jSequential.modules[moduleName]
+			var currentModule = jSpaghetti.modules[moduleName]
 			var module = {
 				config: {
 					debugMode: false
@@ -213,7 +213,7 @@
 						instructions: [],
 						run: function(lastState){
 							setTimeout(function(){
-								if (jSequential.state.ready){
+								if (jSpaghetti.state.ready){
 									//-------------------//
 									//--Data recovering--//
 									//-------------------//
@@ -221,7 +221,7 @@
 										currentSequence.state = lastState
 										if (currentModule.config.debugMode) showDebugMessage("Data recovered from the last state (" + moduleName + ":" + sequenceName + "): ", getObjectSnapshot(currentSequence.state))
 									} else { //If the last state is not avaiable then data is caught from storage
-										var localStorage = new jSequential.Storage(eval(STORAGE_NAME)) //It sets the Storage object
+										var localStorage = new jSpaghetti.Storage(eval(STORAGE_NAME)) //It sets the Storage object
 										var storedData = localStorage.get()
 										if (storedData){
 											currentSequence.state = storedData //Restore the stored data
@@ -339,7 +339,7 @@
 									}
 																			
 								} else {
-									if (currentModule.config.debugMode) showDebugMessage("jSequential is not ready: Probably the page is about to be reloaded (" + moduleName + ":" + sequenceName + ")", " ")
+									if (currentModule.config.debugMode) showDebugMessage("jSpaghetti is not ready: Probably the page is about to be reloaded (" + moduleName + ":" + sequenceName + ")", " ")
 								}
 							}, DEFAULT_DELAY)
 								
@@ -349,7 +349,7 @@
 							setTimeout(function(){
 								var routeReseted = new Route(0, 0)
 								currentSequence.state = new State(routeReseted, {$: undefined}, null, false) //Reset sequence
-								var localStorage = new jSequential.Storage(eval(STORAGE_NAME))
+								var localStorage = new jSpaghetti.Storage(eval(STORAGE_NAME))
 								if (localStorage.get()) localStorage.reset() //Reset the local storage just in case
 								if (currentModule.config.debugMode) showDebugMessage("Sequence is reset (" + moduleName + ":" + sequenceName + ")", " ")
 							}, DEFAULT_DELAY * 2)
@@ -364,8 +364,8 @@
 				}
 			}
 			if (currentModule == undefined){ //It defines a new module if it do not exist yet
-				jSequential.modules[moduleName] = module
-				currentModule = jSequential.modules[moduleName]
+				jSpaghetti.modules[moduleName] = module
+				currentModule = jSpaghetti.modules[moduleName]
 			}
 			return currentModule
 		},
@@ -383,5 +383,5 @@
 		}
 	}
 
-	return $jSequential = jSequential
+	return $jSpaghetti = jSpaghetti
 })()
