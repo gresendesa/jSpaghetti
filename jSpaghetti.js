@@ -117,7 +117,7 @@
 	/*This function evaluates a Tomato expression*/
 	function evaluateExpression(expression, shared){
 		const STORAGETOKEN = /\*/g
-		expression = String(expression).replace(STORAGETOKEN, "shared.")
+		expression = String(expression).replace(STORAGETOKEN, "shared")
 		var result = eval(expression)
 		return result
 	}
@@ -306,6 +306,8 @@
 																	currentSequence.state.route.command = 0
 																	currentSequence.state.route.instruction = getInstructionPosByLabel(currentCommand[GOTOIF_COMMAND][2], currentSequence.instructions)
 																} else dispatchExitCommand(moduleName, sequenceName)
+															} else {
+																currentSequence.state.route = nextRoute
 															}
 														}
 														if (redirect){
