@@ -7,7 +7,7 @@ jSpaghetti is a Javascript framework to build automation scripts with sequential
 
 ## Motivation
 
-The project came from the necessity of a easy way to write browser javascript bot. The project was generalized to cover other purposes, though.
+The project came from the necessity of a easy way to write browser javascript bots. The project was generalized to cover other purposes, though.
 
 ## Installation
 
@@ -48,6 +48,15 @@ var sequenceObject = $jSpaguetti.module("myModule").sequence("mySequenceBaz")
 ```
 
 #### Instructions
+This is the best part. Procedures can be arranged to be executed in a defined order:
+```js
+sequenceObject.intructions = [
+	{"step1":["myProcedureFoo", "myProcedureBar"]},
+	{"stepX":"myProcedureBax"}
+]
+
+//Define as much as you need
+```
 
 ##### Commands
 
@@ -56,3 +65,5 @@ var sequenceObject = $jSpaguetti.module("myModule").sequence("mySequenceBaz")
 #### Stopping
 
 #### Debugging
+
+### Shared data
