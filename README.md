@@ -60,10 +60,18 @@ sequenceObject.intructions = [
 
 ##### Commands
 Internal commands can change the script behavior.
-* ```js "_exit" ``` - Finish the sequence execution
-* ```js {"wait": 1000} ``` - Wait the defined time in ms
-* ```js {"wait": "_forTheSignal"} ``` - Wait until a signal is dispached
-* ```js {"gotoif":["2 == 1", "step1", "labelX"]} ``` - It redirects the program flow
+```js 
+"_exit" //Finish the sequence execution
+``` 
+```js 
+{"wait": 1000} //Wait the defined time in ms
+``` 
+```js 
+{"wait": "_forTheSignal"} //Wait until a signal is dispached
+``` 
+```js 
+{"gotoif":["2 == 1", "step1", "labelX"]} // It redirects the program flow
+``` 
 
 #### Running
 
