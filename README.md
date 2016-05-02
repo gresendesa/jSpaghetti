@@ -1,4 +1,4 @@
-jSpaghetti — Sequential and declarative JavaScript
+jSpaghetti
 ==================================================
 
 ## Synopsis
