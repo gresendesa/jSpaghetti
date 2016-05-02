@@ -36,6 +36,8 @@ var $jSpaguetti.module("myModule").procedure("myProcedureFoo", function(){
 var $jSpaguetti.module("myModule").procedure("myProcedureBar", function(){
 	
 })
+
+//Define as much as you need
 ```
 
 ### Sequences
