@@ -48,17 +48,22 @@ var sequenceObject = $jSpaguetti.module("myModule").sequence("mySequenceBaz")
 ```
 
 #### Instructions
-This is the best part. Procedures can be arranged to be executed in a defined order:
+This is the best part. You can use a declarative way to write the script behavior. Procedures can be arranged to be executed in a defined order:
 ```js
 sequenceObject.intructions = [
 	{"step1":["myProcedureFoo", "myProcedureBar"]},
-	{"stepX":"myProcedureBax"}
+	{"labelX":"myProcedureBax"}
 ]
 
 //Define as much as you need
 ```
 
 ##### Commands
+Internal commands can change the script behavior.
+* ```js "_exit" ``` - Finish the sequence execution
+* ```js {"wait": 1000} ``` - Wait the defined time in ms
+* ```js {"wait": "_forTheSignal"} ``` - Wait until a signal is dispached
+* ```js {"gotoif":["2 == 1", "step1", "labelX"]} ``` - It redirects the program flow
 
 #### Running
 
@@ -67,3 +72,5 @@ sequenceObject.intructions = [
 #### Debugging
 
 ### Shared data
+
+### Events
