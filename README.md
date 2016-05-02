@@ -1,4 +1,4 @@
-jSpaghetti — Sequential and declarative JavaScript
+jSpaghetti
 ==================================================
 
 ## Synopsis
@@ -101,3 +101,9 @@ $jSpaguetti.module("myModule").procedure("myProcedureBar", function(sharedData){
 ```
 
 ### Events
+The sequences return the "terminated" event when the sequence is done.
+```js
+$jSpaguetti.module("myModule").procedure("myProcedureBar").events.addEventListener("terminated", function(){
+	//Code something in here
+})
+```
