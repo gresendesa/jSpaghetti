@@ -18,6 +18,7 @@ Just include the file on document page, like:
 This code can be also injected on the document page using tools like Greasemonkey or something.
 
 ## API Reference
+Warning: This manual is just a sketch. Detailed manual coming soon
 
 ### Modules
 * Creating a new module
