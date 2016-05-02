@@ -30,11 +30,11 @@ Procedures are custom functions to be used as a library for the sequences. Each 
 * Defining procedures
 ```js
 $jSpaguetti.module("myModule").procedure("myProcedureFoo", function(){
-	
+	//Code something in here
 })
 
 $jSpaguetti.module("myModule").procedure("myProcedureBar", function(){
-	
+	//Code something in here
 })
 
 //Define as much as you need
@@ -70,15 +70,34 @@ Internal commands can change the script behavior.
 {"wait": "_forTheSignal"} //Wait until a signal is dispached
 ``` 
 ```js 
-{"gotoif":["2 == 1", "step1", "labelX"]} // It redirects the program flow (In this case to "labelX")
+{"gotoif":["2 == 1", "step1", "labelX"]} // It redirects the program flow (In this case to the "labelX")
 ``` 
 
 #### Running
+* To execute a sequence use something like this:
+```js
+$jSpaguetti.module("myModule").procedure("myProcedureBar").run()
+```
 
 #### Stopping
-
+```js
+$jSpaguetti.module("myModule").procedure("myProcedureBar").reset()
+```
 #### Debugging
+To see what is happening during the sequence execution, turn on the debug mode. The debugging log will be shown on browser console.
+```js
+$jSpaguetti.module("myModule").config.debugMode = true
+```
 
 ### Shared data
+Data can be shared between procedures during the sequence execution. The shared object is received as the first parameter on each procedure. If this object is modified, that changes will be available for the next instruction. The previous procedure return value is always available on the "$" attribute of this object.
+
+```js
+$jSpaguetti.module("myModule").procedure("myProcedureBar", function(sharedData){
+	console.log(sharedData.$) //It will show the value returned for the previous procedure
+	sharedData.foo = "baz" //This attribute and its value will be available for the next procedures
+	return 2000 //This value will be available on the "$" attribute in the next procedure
+})
+```
 
 ### Events
