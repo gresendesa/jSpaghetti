@@ -94,7 +94,7 @@ $jSpaghetti.module("myModule").config.debugMode = true
 ```
 
 ### Shared data
-Data can be shared between procedures during the sequence execution. The shared object is received as the first parameter on each procedure. If this object is modified, that changes will be available for the next instruction. The previous procedure return value is always available on the "$" attribute of this object.
+Data can be shared between procedures during the sequence execution. The shared object is received as the first parameter on each procedure. If this object is modified, that changes will be available for the next instruction. The previous procedure return value is always available on the "$" attribute of this object. 
 
 ```js
 $jSpaghetti.module("myModule").procedure("myProcedureBar", function(sharedData){
