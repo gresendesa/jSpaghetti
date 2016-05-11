@@ -74,7 +74,8 @@
 		if (instructions.length > 0){
 			for (var i = 0; i < instructions.length; i++) {
 				var instructionLabel = getFirstAttribName(instructions[i])
-				if (typeof instructions[i][instructionLabel] == 'string'){ //It turns string intruction content into a array
+
+				if (Object.prototype.toString.call(instructions[i][instructionLabel]) != '[object Array]'){ //It turns a non object intruction content into a array
 					instructions[i][instructionLabel] = [instructions[i][instructionLabel]]
 				}
 				for (var z = 0; z < instructions[i][instructionLabel].length; z++) {
@@ -195,6 +196,7 @@
 		state: {
 			ready: true
 		},
+		version: "0.1",
 		modules: {}, //This object stores each module as a element
 		module: function(moduleName){ //This function returns the module object especified by moduleName
 			var currentModule = jSpaghetti.modules[moduleName]
