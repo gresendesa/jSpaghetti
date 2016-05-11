@@ -1,9 +1,12 @@
-jSpaghetti
+[jSpaghetti](https://github.com/gresendesa/jSpaghetti)
 ==================================================
 
 ## Synopsis
 
 jSpaghetti is a Javascript API to build automation scripts with sequential and declarative paradigm.
+
+## Author
+[Guilherme Resende Sá](https://github.com/gresendesa)
 
 ## Motivation
 
