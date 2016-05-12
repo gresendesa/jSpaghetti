@@ -35,18 +35,18 @@
 	function getInstructionByRoute(instructions, route){
 		var instructionLabel = getFirstAttribName(instructions[route.instruction])
 		var instructionCommands = instructions[route.instruction][instructionLabel]
-		return instructionCommands
+		return {label: instructionLabel, commands: instructionCommands}
 	}
 
 	/*It returns the command by route*/
 	function getCommandByRoute(instructions, route){
-		var instructionCommands = getInstructionByRoute(instructions, route)
+		var instructionCommands = getInstructionByRoute(instructions, route).commands
 		return instructionCommands[route.command]
 	}
 
 	/*It returns next route*/
 	function getNextRoute(instructions, route){
-		var instructionCommands = getInstructionByRoute(instructions, route)
+		var instructionCommands = getInstructionByRoute(instructions, route).commands
 		var nextRoute = new Route(route.instruction, route.command)
 		if (route.command < instructionCommands.length - 1){
 			nextRoute.command += 1
@@ -226,15 +226,15 @@
 									//-------------------//
 									if (lastState){ //It recovers the last state if avaiable
 										currentSequence.state = lastState
-										if (currentModule.config.debugMode) showDebugMessage("Data recovered from the last state (" + moduleName + ":" + sequenceName + "): ", getObjectSnapshot(currentSequence.state))
+										//if (currentModule.config.debugMode) showDebugMessage("Data recovered from the last state (" + moduleName + ":" + sequenceName + "): ", getObjectSnapshot(currentSequence.state))
 									} else { //If the last state is not avaiable then data is caught from storage
 										var localStorage = new jSpaghetti.Storage(eval(STORAGE_NAME)) //It sets the Storage object
 										var storedData = localStorage.get()
 										if (storedData){
 											currentSequence.state = storedData //Restore the stored data
-											if (currentModule.config.debugMode) showDebugMessage("Data recovered from the local storage (" + moduleName + ":" + sequenceName + "): ", getObjectSnapshot(currentSequence.state))
+											//if (currentModule.config.debugMode) showDebugMessage("Data recovered from the local storage (" + moduleName + ":" + sequenceName + "): ", getObjectSnapshot(currentSequence.state))
 										} else {
-											if (currentModule.config.debugMode) showDebugMessage("Data recovered from the initial state (" + moduleName + ":" + sequenceName + "): ", getObjectSnapshot(currentSequence.state))
+											//if (currentModule.config.debugMode) showDebugMessage("Data recovered from the initial state (" + moduleName + ":" + sequenceName + "): ", getObjectSnapshot(currentSequence.state))
 										}
 									}
 
@@ -262,6 +262,8 @@
 										}
 
 										var currentCommand = getCommandByRoute(currentSequence.instructions, currentSequence.state.route)
+										var currentCommandInstructionPosition = currentSequence.state.route.command
+										var currentInstruction = getInstructionByRoute(currentSequence.instructions, currentSequence.state.route).label
 										var nextRoute = getNextRoute(currentSequence.instructions, currentSequence.state.route)
 
 										switch(typeof(currentCommand)){
@@ -272,14 +274,14 @@
 															currentSequence.state.isWaitingForSignal = true
 															currentSequence.state.route = nextRoute
 															startSignalListener(moduleName, sequenceName) //It starts the signal listener
-															if (currentModule.config.debugMode) showDebugMessage("Waiting for the signal " + "(" + moduleName + ":" + sequenceName + ")", " ")
+															if (currentModule.config.debugMode) showDebugMessage("Waiting for the signal " + "(" + moduleName + ":" + sequenceName + ":" + currentInstruction + ":" + currentCommandInstructionPosition + ")", " ")
 														} else if (currentCommand[WAIT_COMMAND] == WAIT_FOR_PAGE_TO_RELOAD){
 															currentSequence.state.route = nextRoute
-															if (currentModule.config.debugMode) showDebugMessage("Waiting for page to reload " + "(" + moduleName + ":" + sequenceName + ")", " ")
+															if (currentModule.config.debugMode) showDebugMessage("Waiting for page to reload " + "(" + moduleName + ":" + sequenceName + ":" + currentInstruction + ":" + currentCommandInstructionPosition + ")", " ")
 														} else {
 															//It waits for the especified time until dispatching last command event
 															var timeToWait = evaluateExpression(currentCommand[WAIT_COMMAND], currentSequence.state.shared)
-															if (currentModule.config.debugMode) showDebugMessage("Waiting " + timeToWait + " ms (" + moduleName + ":" + sequenceName + ")", " ")
+															if (currentModule.config.debugMode) showDebugMessage("Waiting " + timeToWait + " ms (" + moduleName + ":" + sequenceName + ":" + currentInstruction + ":" + currentCommandInstructionPosition + ")", " ")
 															var waitCount = 0
 															var loop = setInterval(function(){
 																waitCount++
@@ -298,14 +300,14 @@
 														break
 													case GOTOIF_COMMAND:
 														if (evaluateExpression(currentCommand[GOTOIF_COMMAND][0], currentSequence.state.shared)){
-															if (currentModule.config.debugMode) showDebugMessage("Gotoif returned true (" + moduleName + ":" + sequenceName + ")", " ")
+															if (currentModule.config.debugMode) showDebugMessage("Gotoif returned true (" + moduleName + ":" + sequenceName + ":" + currentInstruction + ":" + currentCommandInstructionPosition + ")", " ")
 															if (currentCommand[GOTOIF_COMMAND][1] != EXIT_COMMAND){
 																var redirect = currentCommand[GOTOIF_COMMAND][1]
 																currentSequence.state.route.command = 0
 																currentSequence.state.route.instruction = getInstructionPosByLabel(currentCommand[GOTOIF_COMMAND][1], currentSequence.instructions)
 															} else dispatchExitCommand(moduleName, sequenceName)
 														} else {
-															if (currentModule.config.debugMode) showDebugMessage("Gotoif returned false (" + moduleName + ":" + sequenceName + ")", " ")
+															if (currentModule.config.debugMode) showDebugMessage("Gotoif returned false (" + moduleName + ":" + sequenceName + ":" + currentInstruction + ":" + currentCommandInstructionPosition + ")", " ")
 															if (currentCommand[GOTOIF_COMMAND].length > 2){
 																if (currentCommand[GOTOIF_COMMAND][2] != EXIT_COMMAND){
 																	var redirect = currentCommand[GOTOIF_COMMAND][2]
@@ -328,7 +330,7 @@
 												if (currentCommand != EXIT_COMMAND){
 													currentSequence.state.lastProcedureRoute = new Route(currentSequence.state.route.instruction, currentSequence.state.route.command)
 													currentSequence.state.route = nextRoute
-													if (currentModule.config.debugMode) showDebugMessage("Running procedure", "\"" + moduleName + ":" + sequenceName + ":" + currentCommand + "\"")
+													if (currentModule.config.debugMode) showDebugMessage("Running command", "\"" + moduleName + ":" + sequenceName + ":" + currentInstruction + ":" + currentCommandInstructionPosition + ":" + currentCommand + "\"")
 													//setTimeout makes asynchronous calls to prevent stack growing
 													setTimeout(function(){
 														currentSequence.state.shared.$ = currentModule.procedures[currentCommand](currentSequence.state.shared, getSharedFunctions(moduleName, sequenceName)) //It executes defined procedure strictly speaking
