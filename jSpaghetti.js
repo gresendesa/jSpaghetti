@@ -3,6 +3,7 @@
 	const LAST_COMMAND_TERMINATED = "lastCommandTerminated"
 	const PAGE_IS_ABOUT_TO_RELOAD = "beforeunload"
 	const SEQUENCE_TERMINATED = "terminated"
+	const SEQUENCE_RESET = "reset"
 	const STORAGE_NAME = "\"jSpaghetti:\" + moduleName + \":\" + sequenceName"
 	const EXIT_COMMAND = "_exit"
 	const GOTOIF_COMMAND = "gotoif"
@@ -366,7 +367,8 @@
 								var localStorage = new jSpaghetti.Storage(eval(STORAGE_NAME))
 								if (localStorage.get()) localStorage.reset() //Reset the local storage just in case
 								if (currentModule.config.debugMode) showDebugMessage("Sequence is reset (" + moduleName + ":" + sequenceName + ")", " ")
-							}, DEFAULT_DELAY * 2)
+								currentSequence.events.dispatchEvent(getEvent(SEQUENCE_RESET))
+							}, DEFAULT_DELAY * 5)
 						}
 					}
 					if (currentSequence == undefined){ //It defines a new sequence object if it do not exist yet
