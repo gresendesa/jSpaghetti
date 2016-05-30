@@ -184,29 +184,32 @@
 		} else return false
 	}
 
-	/*It listens for the reload page event. It save all sequences states before to reload page*/
-	window.addEventListener(PAGE_IS_ABOUT_TO_RELOAD, function(event){
-		jSpaghetti.state.ready = false
-		for(var moduleName in jSpaghetti.modules){
-			for(var sequenceName in jSpaghetti.modules[moduleName].sequences){
-				var localStorage = new jSpaghetti.Storage(eval(STORAGE_NAME))
-				localStorage.set(jSpaghetti.modules[moduleName].sequences[sequenceName].state)
-			}
-		}
-	})
-
 	/*It creates a new event object*/
 	function getEvent(eventName){
 		var newEvent = new Event(eventName)
 		return newEvent
 	}
 
+	/*It listens for the reload page event. It save all sequences states before to reload page*/
+	function startStateSaver() {
+		window.addEventListener(PAGE_IS_ABOUT_TO_RELOAD, function(event){
+			jSpaghetti.state.ready = false
+			for(var moduleName in jSpaghetti.modules){
+				for(var sequenceName in jSpaghetti.modules[moduleName].sequences){
+					var localStorage = new jSpaghetti.Storage(eval(STORAGE_NAME))
+					localStorage.set(jSpaghetti.modules[moduleName].sequences[sequenceName].state)
+				}
+			}
+		})
+	}
+
 	/*Main framework object*/
 	var jSpaghetti = {
 		state: {
-			ready: true
+			ready: true,
+			running : false
 		},
-		version: "0.1",
+		version: "0.1.3",
 		modules: {}, //This object stores each module as a element
 		module: function(moduleName){ //This function returns the module object especified by moduleName
 			var currentModule = jSpaghetti.modules[moduleName]
@@ -232,6 +235,18 @@
 							setTimeout(function(){
 								if (jSpaghetti.state.ready){
 									//-------------------//
+									//-----Listeners-----//
+									//-------------------//
+									if(!jSpaghetti.state.running){
+										jSpaghetti.state.running = true
+										startStateSaver()
+									}
+									var listener = document.createDocumentFragment() //Disposable element used to listen last command terminated event
+									listener.addEventListener(LAST_COMMAND_TERMINATED, function(){ //It listens for last command terminated event
+										currentModule.sequences[sequenceName].run(currentSequence.state)
+										//console.log("Last command terminated")
+									})
+									//-------------------//
 									//--Data recovering--//
 									//-------------------//
 									if (lastState){ //It recovers the last state if avaiable
@@ -252,14 +267,6 @@
 									var resultSyntaxCheck = checkInstructionsSyntax(currentSequence.instructions, currentModule.procedures)
 									if ((currentSequence.state.route) &&
 										(resultSyntaxCheck === true)){ //It executes only route is different from null
-										//-------------------//
-										//-----Listeners-----//
-										//-------------------//
-										var listener = document.createDocumentFragment() //Disposable element used to listen last command terminated event
-										listener.addEventListener(LAST_COMMAND_TERMINATED, function(){ //It listens for last command terminated event
-											currentModule.sequences[sequenceName].run(currentSequence.state)
-											//console.log("Last command terminated")
-										})
 
 										//-------------------//
 										//--Command Handler--//
