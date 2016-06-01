@@ -196,8 +196,10 @@
 			jSpaghetti.state.ready = false
 			for(var moduleName in jSpaghetti.modules){
 				for(var sequenceName in jSpaghetti.modules[moduleName].sequences){
-					var localStorage = new jSpaghetti.Storage(eval(STORAGE_NAME))
-					localStorage.set(jSpaghetti.modules[moduleName].sequences[sequenceName].state)
+					var localStorage = new jSpaghetti.Storage()
+					localStorage.set(eval(STORAGE_NAME), jSpaghetti.modules[moduleName].sequences[sequenceName].state, function(){
+						//nothing
+					})
 				}
 			}
 		})
@@ -215,7 +217,8 @@
 			var currentModule = jSpaghetti.modules[moduleName]
 			var module = {
 				config: {
-					debugMode: false
+					debugMode: false,
+					developerMode: false
 				},
 				sequences: {},
 				procedures: {},
@@ -243,148 +246,154 @@
 									}
 									var listener = document.createDocumentFragment() //Disposable element used to listen last command terminated event
 									listener.addEventListener(LAST_COMMAND_TERMINATED, function(){ //It listens for last command terminated event
+										if (currentModule.config.developerMode) showDebugMessage("Last command terminated event dispatched (" + moduleName + ":" + sequenceName + "): ", getObjectSnapshot(currentSequence.state))
 										currentModule.sequences[sequenceName].run(currentSequence.state)
-										//console.log("Last command terminated")
 									})
+
+									//It checks the intructions syntax
+									var resultSyntaxCheck = checkInstructionsSyntax(currentSequence.instructions, currentModule.procedures)
+
+									var runNextCommand = function(commonData){
+										if (commonData)
+										currentSequence.state = commonData
+										
+										if ((currentSequence.state.route) &&
+											(resultSyntaxCheck === true)){ //It executes only route is different from null
+											//-------------------//
+											//--Command Handler--//
+											//-------------------//
+											//It redirects the route to the last procedure route if it was waiting for the signal before page has reloaded
+											if(currentSequence.state.callLastProcedure){
+												currentSequence.state.callLastProcedure = false
+												currentSequence.state.route = currentSequence.state.lastProcedureRoute
+											}
+
+											var currentCommand = getCommandByRoute(currentSequence.instructions, currentSequence.state.route)
+											var currentCommandInstructionPosition = currentSequence.state.route.command
+											var currentInstruction = getInstructionByRoute(currentSequence.instructions, currentSequence.state.route).label
+											var nextRoute = getNextRoute(currentSequence.instructions, currentSequence.state.route)
+
+											switch(typeof(currentCommand)){
+												case 'object': //It handles internal object commands
+													switch(Object.keys(currentCommand)[0]){
+														case WAIT_COMMAND:
+															if (typeof(currentCommand[WAIT_COMMAND]) == 'object'){
+																switch(getFirstAttribName(currentCommand[WAIT_COMMAND])){
+																	case WAIT_FOR_THE_SIGNAL_FLAG:
+																		currentSequence.state.lastProcedureRoute = new Route(currentSequence.state.route.instruction, currentSequence.state.route.command)
+																		currentSequence.state.callLastProcedure = true
+																		currentSequence.state.route = nextRoute
+																		startSignalListener(moduleName, sequenceName) //It starts the signal listener
+																		if (currentModule.config.debugMode) showDebugMessage("Waiting for the signal and running command", "\"" + moduleName + ":" + sequenceName + ":" + currentInstruction + ":" + currentCommandInstructionPosition + ":" + currentCommand[WAIT_COMMAND][WAIT_FOR_THE_SIGNAL_FLAG] + "\"")
+																		setTimeout(function(){
+																			currentSequence.state.shared.$ = currentModule.procedures[currentCommand[WAIT_COMMAND][WAIT_FOR_THE_SIGNAL_FLAG]](currentSequence.state.shared, getSharedFunctions(moduleName, sequenceName)) //It executes defined procedure strictly speaking
+																		}, 0)
+																		break
+																	default: break
+																}
+															} else if (currentCommand[WAIT_COMMAND] == WAIT_FOR_THE_SIGNAL_FLAG){
+																currentSequence.state.callLastProcedure = true
+																currentSequence.state.route = nextRoute
+																startSignalListener(moduleName, sequenceName) //It starts the signal listener
+																if (currentModule.config.debugMode) showDebugMessage("Waiting for the signal " + "(" + moduleName + ":" + sequenceName + ":" + currentInstruction + ":" + currentCommandInstructionPosition + ")", " ")
+															} else if (currentCommand[WAIT_COMMAND] == WAIT_FOR_PAGE_TO_RELOAD){
+																currentSequence.state.route = nextRoute
+																if (currentModule.config.debugMode) showDebugMessage("Waiting for page to reload " + "(" + moduleName + ":" + sequenceName + ":" + currentInstruction + ":" + currentCommandInstructionPosition + ")", " ")
+															} else {
+																//It waits for the especified time until dispatching last command event
+																var timeToWait = evaluateExpression(currentCommand[WAIT_COMMAND], currentSequence.state.shared)
+																if (currentModule.config.debugMode) showDebugMessage("Waiting " + timeToWait + " ms (" + moduleName + ":" + sequenceName + ":" + currentInstruction + ":" + currentCommandInstructionPosition + ")", " ")
+																var waitCount = 0
+																var loop = setInterval(function(){
+																	waitCount++
+																	if ((!currentSequence.state.route) ||
+																		(waitCount >= timeToWait/DEFAULT_DELAY)){
+																		clearInterval(loop)
+																		if (!currentSequence.state.route){
+																			if (currentModule.config.debugMode) showDebugMessage("Wait process was abruptly interrupted (" + moduleName + ":" + sequenceName + ")", " ")
+																		} else {
+																			currentSequence.state.route = nextRoute
+																		}
+																		listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
+																	}
+																}, DEFAULT_DELAY)
+															}
+															break
+														case GOTOIF_COMMAND:
+															if (evaluateExpression(currentCommand[GOTOIF_COMMAND][0], currentSequence.state.shared)){
+																if (currentModule.config.debugMode) showDebugMessage("Gotoif returned true (" + moduleName + ":" + sequenceName + ":" + currentInstruction + ":" + currentCommandInstructionPosition + ")", " ")
+																if (currentCommand[GOTOIF_COMMAND][1] != EXIT_COMMAND){
+																	var redirect = currentCommand[GOTOIF_COMMAND][1]
+																	currentSequence.state.route.command = 0
+																	currentSequence.state.route.instruction = getInstructionPosByLabel(currentCommand[GOTOIF_COMMAND][1], currentSequence.instructions)
+																} else dispatchExitCommand(moduleName, sequenceName)
+															} else {
+																if (currentModule.config.debugMode) showDebugMessage("Gotoif returned false (" + moduleName + ":" + sequenceName + ":" + currentInstruction + ":" + currentCommandInstructionPosition + ")", " ")
+																if (currentCommand[GOTOIF_COMMAND].length > 2){
+																	if (currentCommand[GOTOIF_COMMAND][2] != EXIT_COMMAND){
+																		var redirect = currentCommand[GOTOIF_COMMAND][2]
+																		currentSequence.state.route.command = 0
+																		currentSequence.state.route.instruction = getInstructionPosByLabel(currentCommand[GOTOIF_COMMAND][2], currentSequence.instructions)
+																	} else dispatchExitCommand(moduleName, sequenceName)
+																} else {
+																	currentSequence.state.route = nextRoute
+																}
+															}
+															if (redirect){
+																if (currentModule.config.debugMode) showDebugMessage("Flow redirected to \"" + redirect + "\" (" + moduleName + ":" + sequenceName + ")", " ")
+															}
+															listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
+															break
+														default: break
+													}
+													break
+												default: //Ir handles custom procedure commands and _exit
+													if (currentCommand != EXIT_COMMAND){
+														currentSequence.state.lastProcedureRoute = new Route(currentSequence.state.route.instruction, currentSequence.state.route.command)
+														currentSequence.state.route = nextRoute
+														if (currentModule.config.debugMode) showDebugMessage("Running command", "\"" + moduleName + ":" + sequenceName + ":" + currentInstruction + ":" + currentCommandInstructionPosition + ":" + currentCommand + "\"")
+														//setTimeout makes asynchronous calls to prevent stack growing
+														setTimeout(function(){
+															currentSequence.state.shared.$ = currentModule.procedures[currentCommand](currentSequence.state.shared, getSharedFunctions(moduleName, sequenceName)) //It executes defined procedure strictly speaking
+															listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
+														}, 0)
+													} else {
+														dispatchExitCommand(moduleName, sequenceName)
+														listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
+													}
+													break
+											}
+											
+										} else {
+											if (resultSyntaxCheck !== true) throwErrorNotification(resultSyntaxCheck + " (" + moduleName + ":" + sequenceName + ")", " ")
+											if (currentSequence.state.route == null) {
+												if (currentModule.config.debugMode) showDebugMessage("Sequence is terminated (" + moduleName + ":" + sequenceName + ")", " ")
+												currentSequence.events.dispatchEvent(getEvent(SEQUENCE_TERMINATED)) //It says that sequence is terminated
+											}
+											
+										}
+									}
+
 									//-------------------//
 									//--Data recovering--//
 									//-------------------//
 									if (lastState){ //It recovers the last state if avaiable
-										currentSequence.state = lastState
-										//if (currentModule.config.debugMode) showDebugMessage("Data recovered from the last state (" + moduleName + ":" + sequenceName + "): ", getObjectSnapshot(currentSequence.state))
+										if (currentModule.config.developerMode) showDebugMessage("Data recovered from the last state (" + moduleName + ":" + sequenceName + "): ", getObjectSnapshot(currentSequence.state))
+										runNextCommand(lastState)
 									} else { //If the last state is not avaiable then data is caught from storage
-										var localStorage = new jSpaghetti.Storage(eval(STORAGE_NAME)) //It sets the Storage object
-										var storedData = localStorage.get()
-										if (storedData){
-											currentSequence.state = storedData //Restore the stored data
-											//if (currentModule.config.debugMode) showDebugMessage("Data recovered from the local storage (" + moduleName + ":" + sequenceName + "): ", getObjectSnapshot(currentSequence.state))
-										} else {
-											//if (currentModule.config.debugMode) showDebugMessage("Data recovered from the initial state (" + moduleName + ":" + sequenceName + "): ", getObjectSnapshot(currentSequence.state))
-										}
-									}
-
-									//It checks the intructions syntax
-									var resultSyntaxCheck = checkInstructionsSyntax(currentSequence.instructions, currentModule.procedures)
-									if ((currentSequence.state.route) &&
-										(resultSyntaxCheck === true)){ //It executes only route is different from null
-
-										//-------------------//
-										//--Command Handler--//
-										//-------------------//
-
-										//It redirects the route to the last procedure route if it was waiting for the signal before page has reloaded
-										if(currentSequence.state.callLastProcedure){
-											currentSequence.state.callLastProcedure = false
-											currentSequence.state.route = currentSequence.state.lastProcedureRoute
-										}
-
-										var currentCommand = getCommandByRoute(currentSequence.instructions, currentSequence.state.route)
-										var currentCommandInstructionPosition = currentSequence.state.route.command
-										var currentInstruction = getInstructionByRoute(currentSequence.instructions, currentSequence.state.route).label
-										var nextRoute = getNextRoute(currentSequence.instructions, currentSequence.state.route)
-
-										switch(typeof(currentCommand)){
-											case 'object': //It handles internal object commands
-												switch(Object.keys(currentCommand)[0]){
-													case WAIT_COMMAND:
-														if (typeof(currentCommand[WAIT_COMMAND]) == 'object'){
-															switch(getFirstAttribName(currentCommand[WAIT_COMMAND])){
-																case WAIT_FOR_THE_SIGNAL_FLAG:
-																	currentSequence.state.lastProcedureRoute = new Route(currentSequence.state.route.instruction, currentSequence.state.route.command)
-																	currentSequence.state.callLastProcedure = true
-																	currentSequence.state.route = nextRoute
-																	startSignalListener(moduleName, sequenceName) //It starts the signal listener
-																	if (currentModule.config.debugMode) showDebugMessage("Waiting for the signal and running command", "\"" + moduleName + ":" + sequenceName + ":" + currentInstruction + ":" + currentCommandInstructionPosition + ":" + currentCommand[WAIT_COMMAND][WAIT_FOR_THE_SIGNAL_FLAG] + "\"")
-																	setTimeout(function(){
-																		currentSequence.state.shared.$ = currentModule.procedures[currentCommand[WAIT_COMMAND][WAIT_FOR_THE_SIGNAL_FLAG]](currentSequence.state.shared, getSharedFunctions(moduleName, sequenceName)) //It executes defined procedure strictly speaking
-																	}, 0)
-																	break
-																default: break
-															}
-														} else if (currentCommand[WAIT_COMMAND] == WAIT_FOR_THE_SIGNAL_FLAG){
-															currentSequence.state.callLastProcedure = true
-															currentSequence.state.route = nextRoute
-															startSignalListener(moduleName, sequenceName) //It starts the signal listener
-															if (currentModule.config.debugMode) showDebugMessage("Waiting for the signal " + "(" + moduleName + ":" + sequenceName + ":" + currentInstruction + ":" + currentCommandInstructionPosition + ")", " ")
-														} else if (currentCommand[WAIT_COMMAND] == WAIT_FOR_PAGE_TO_RELOAD){
-															currentSequence.state.route = nextRoute
-															if (currentModule.config.debugMode) showDebugMessage("Waiting for page to reload " + "(" + moduleName + ":" + sequenceName + ":" + currentInstruction + ":" + currentCommandInstructionPosition + ")", " ")
-														} else {
-															//It waits for the especified time until dispatching last command event
-															var timeToWait = evaluateExpression(currentCommand[WAIT_COMMAND], currentSequence.state.shared)
-															if (currentModule.config.debugMode) showDebugMessage("Waiting " + timeToWait + " ms (" + moduleName + ":" + sequenceName + ":" + currentInstruction + ":" + currentCommandInstructionPosition + ")", " ")
-															var waitCount = 0
-															var loop = setInterval(function(){
-																waitCount++
-																if ((!currentSequence.state.route) ||
-																	(waitCount >= timeToWait/DEFAULT_DELAY)){
-																	clearInterval(loop)
-																	if (!currentSequence.state.route){
-																		if (currentModule.config.debugMode) showDebugMessage("Wait process was abruptly interrupted (" + moduleName + ":" + sequenceName + ")", " ")
-																	} else {
-																		currentSequence.state.route = nextRoute
-																	}
-																	listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
-																}
-															}, DEFAULT_DELAY)
-														}
-														break
-													case GOTOIF_COMMAND:
-														if (evaluateExpression(currentCommand[GOTOIF_COMMAND][0], currentSequence.state.shared)){
-															if (currentModule.config.debugMode) showDebugMessage("Gotoif returned true (" + moduleName + ":" + sequenceName + ":" + currentInstruction + ":" + currentCommandInstructionPosition + ")", " ")
-															if (currentCommand[GOTOIF_COMMAND][1] != EXIT_COMMAND){
-																var redirect = currentCommand[GOTOIF_COMMAND][1]
-																currentSequence.state.route.command = 0
-																currentSequence.state.route.instruction = getInstructionPosByLabel(currentCommand[GOTOIF_COMMAND][1], currentSequence.instructions)
-															} else dispatchExitCommand(moduleName, sequenceName)
-														} else {
-															if (currentModule.config.debugMode) showDebugMessage("Gotoif returned false (" + moduleName + ":" + sequenceName + ":" + currentInstruction + ":" + currentCommandInstructionPosition + ")", " ")
-															if (currentCommand[GOTOIF_COMMAND].length > 2){
-																if (currentCommand[GOTOIF_COMMAND][2] != EXIT_COMMAND){
-																	var redirect = currentCommand[GOTOIF_COMMAND][2]
-																	currentSequence.state.route.command = 0
-																	currentSequence.state.route.instruction = getInstructionPosByLabel(currentCommand[GOTOIF_COMMAND][2], currentSequence.instructions)
-																} else dispatchExitCommand(moduleName, sequenceName)
-															} else {
-																currentSequence.state.route = nextRoute
-															}
-														}
-														if (redirect){
-															if (currentModule.config.debugMode) showDebugMessage("Flow redirected to \"" + redirect + "\" (" + moduleName + ":" + sequenceName + ")", " ")
-														}
-														listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
-														break
-													default: break
-												}
-												break
-											default: //Ir handles custom procedure commands and _exit
-												if (currentCommand != EXIT_COMMAND){
-													currentSequence.state.lastProcedureRoute = new Route(currentSequence.state.route.instruction, currentSequence.state.route.command)
-													currentSequence.state.route = nextRoute
-													if (currentModule.config.debugMode) showDebugMessage("Running command", "\"" + moduleName + ":" + sequenceName + ":" + currentInstruction + ":" + currentCommandInstructionPosition + ":" + currentCommand + "\"")
-													//setTimeout makes asynchronous calls to prevent stack growing
-													setTimeout(function(){
-														currentSequence.state.shared.$ = currentModule.procedures[currentCommand](currentSequence.state.shared, getSharedFunctions(moduleName, sequenceName)) //It executes defined procedure strictly speaking
-														listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
-													}, 0)
-												} else {
-													dispatchExitCommand(moduleName, sequenceName)
-													listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
-												}
-												break
-										}
-										
-									} else {
-										if (resultSyntaxCheck !== true) throwErrorNotification(resultSyntaxCheck + " (" + moduleName + ":" + sequenceName + ")", " ")
-										if (currentSequence.state.route == null) {
-											if (currentModule.config.debugMode) showDebugMessage("Sequence is terminated (" + moduleName + ":" + sequenceName + ")", " ")
-											currentSequence.events.dispatchEvent(getEvent(SEQUENCE_TERMINATED)) //It says that sequence is terminated
-										}
-										
+										var localStorage = new jSpaghetti.Storage() //It sets the Storage object
+										localStorage.get(eval(STORAGE_NAME), function(data){
+											if(data){
+												if (currentModule.config.developerMode) showDebugMessage("Data recovered from the local storage (" + moduleName + ":" + sequenceName + "): ", getObjectSnapshot(currentSequence.state))
+											} else {
+												if (currentModule.config.developerMode) showDebugMessage("Data recovered from the initial state (" + moduleName + ":" + sequenceName + "): ", getObjectSnapshot(currentSequence.state))
+											}
+											runNextCommand(data)
+										})
 									}
 																			
 								} else {
-									if (currentModule.config.debugMode) showDebugMessage("jSpaghetti is not ready: Probably the page is about to be reloaded (" + moduleName + ":" + sequenceName + ")", " ")
+									if (currentModule.config.developerMode) showDebugMessage("jSpaghetti is not ready: Probably the page is about to be reloaded (" + moduleName + ":" + sequenceName + ")", " ")
 								}
 							}, DEFAULT_DELAY)
 								
@@ -394,8 +403,8 @@
 							setTimeout(function(){
 								var routeReseted = new Route(0, 0)
 								currentSequence.state = new State(routeReseted, {$: undefined}, null, false) //Reset sequence
-								var localStorage = new jSpaghetti.Storage(eval(STORAGE_NAME))
-								if (localStorage.get()) localStorage.reset() //Reset the local storage just in case
+								var localStorage = new jSpaghetti.Storage()
+								localStorage.reset(eval(STORAGE_NAME)) //Reset the local storage just in case
 								if (currentModule.config.debugMode) showDebugMessage("Sequence is reset (" + moduleName + ":" + sequenceName + ")", " ")
 								currentSequence.events.dispatchEvent(getEvent(SEQUENCE_RESET))
 							}, DEFAULT_DELAY * 5)
@@ -415,16 +424,20 @@
 			}
 			return currentModule
 		},
-		Storage: function(storageName){ /*Customizable Storage class*/
-			this.storageName = storageName
-			this.get = function(){
-				return JSON.parse(sessionStorage.getItem(this.storageName))
+		Storage: function(){ /*Customizable Storage class*/
+			this.get = function(storageName, callback){
+				if(callback)
+				callback(JSON.parse(sessionStorage.getItem(storageName)))
 			}
-			this.set = function(data){
-				sessionStorage.setItem(this.storageName, JSON.stringify(data))
+			this.set = function(storageName, data, callback){
+				if(callback)
+				callback()
+				sessionStorage.setItem(storageName, JSON.stringify(data))
 			}
-			this.reset = function(){
-				sessionStorage.removeItem(this.storageName)
+			this.reset = function(storageName, callback){
+				if(callback)
+				callback()
+				sessionStorage.removeItem(storageName)
 			}
 		}
 	}
