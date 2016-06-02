@@ -218,11 +218,12 @@
 			ready: true,
 			running : false
 		},
-		version: "0.1.4",
+		version: "0.1.5",
 		modules: {}, //This object stores each module as a element
 		module: function(moduleName){ //This function returns the module object especified by moduleName
 			var currentModule = jSpaghetti.modules[moduleName]
 			var module = {
+				name: moduleName,
 				config: {
 					debugMode: false,
 					developerMode: false
@@ -237,6 +238,8 @@
 					var initialRoute = new Route(0, 0)
 					var initialState = new State(initialRoute, {$: undefined}, null, false)
 					var sequence = {
+						name: sequenceName,
+						module: currentModule,
 						events: document.createDocumentFragment(),
 						state: initialState,
 						signalChannel: null,
