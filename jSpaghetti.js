@@ -196,13 +196,20 @@
 			jSpaghetti.state.ready = false
 			for(var moduleName in jSpaghetti.modules){
 				for(var sequenceName in jSpaghetti.modules[moduleName].sequences){
-					var localStorage = new jSpaghetti.Storage()
-					localStorage.set(eval(STORAGE_NAME), jSpaghetti.modules[moduleName].sequences[sequenceName].state, function(){
+					var localStorage = new jSpaghetti.Storage(eval(STORAGE_NAME))
+					localStorage.set(jSpaghetti.modules[moduleName].sequences[sequenceName].state, function(){
 						//nothing
 					})
 				}
 			}
 		})
+	}
+
+	//It runs a functions assyncronously
+	function runAssyncronously(callback){
+		setTimeout(function(){
+			callback()
+		}, 0)
 	}
 
 	/*Main framework object*/
@@ -211,7 +218,7 @@
 			ready: true,
 			running : false
 		},
-		version: "0.1.3",
+		version: "0.1.4",
 		modules: {}, //This object stores each module as a element
 		module: function(moduleName){ //This function returns the module object especified by moduleName
 			var currentModule = jSpaghetti.modules[moduleName]
@@ -285,9 +292,10 @@
 																		currentSequence.state.route = nextRoute
 																		startSignalListener(moduleName, sequenceName) //It starts the signal listener
 																		if (currentModule.config.debugMode) showDebugMessage("Waiting for the signal and running command", "\"" + moduleName + ":" + sequenceName + ":" + currentInstruction + ":" + currentCommandInstructionPosition + ":" + currentCommand[WAIT_COMMAND][WAIT_FOR_THE_SIGNAL_FLAG] + "\"")
-																		setTimeout(function(){
+																		runAssyncronously(function(){
 																			currentSequence.state.shared.$ = currentModule.procedures[currentCommand[WAIT_COMMAND][WAIT_FOR_THE_SIGNAL_FLAG]](currentSequence.state.shared, getSharedFunctions(moduleName, sequenceName)) //It executes defined procedure strictly speaking
-																		}, 0)
+																		})
+
 																		break
 																	default: break
 																}
@@ -353,10 +361,10 @@
 														currentSequence.state.route = nextRoute
 														if (currentModule.config.debugMode) showDebugMessage("Running command", "\"" + moduleName + ":" + sequenceName + ":" + currentInstruction + ":" + currentCommandInstructionPosition + ":" + currentCommand + "\"")
 														//setTimeout makes asynchronous calls to prevent stack growing
-														setTimeout(function(){
+														runAssyncronously(function(){
 															currentSequence.state.shared.$ = currentModule.procedures[currentCommand](currentSequence.state.shared, getSharedFunctions(moduleName, sequenceName)) //It executes defined procedure strictly speaking
 															listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
-														}, 0)
+														})
 													} else {
 														dispatchExitCommand(moduleName, sequenceName)
 														listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
@@ -373,7 +381,6 @@
 											
 										}
 									}
-
 									//-------------------//
 									//--Data recovering--//
 									//-------------------//
@@ -381,8 +388,8 @@
 										if (currentModule.config.developerMode) showDebugMessage("Data recovered from the last state (" + moduleName + ":" + sequenceName + "): ", getObjectSnapshot(currentSequence.state))
 										runNextCommand(lastState)
 									} else { //If the last state is not avaiable then data is caught from storage
-										var localStorage = new jSpaghetti.Storage() //It sets the Storage object
-										localStorage.get(eval(STORAGE_NAME), function(data){
+										var localStorage = new jSpaghetti.Storage(eval(STORAGE_NAME)) //It sets the Storage object
+										localStorage.get(function(data){
 											if(data){
 												if (currentModule.config.developerMode) showDebugMessage("Data recovered from the local storage (" + moduleName + ":" + sequenceName + "): ", getObjectSnapshot(currentSequence.state))
 											} else {
@@ -398,13 +405,16 @@
 							}, DEFAULT_DELAY)
 								
 						},
-						reset: function(){
+						reset: function(callback){
 							currentSequence.state.route = null //Reset sequence
 							setTimeout(function(){
 								var routeReseted = new Route(0, 0)
 								currentSequence.state = new State(routeReseted, {$: undefined}, null, false) //Reset sequence
-								var localStorage = new jSpaghetti.Storage()
-								localStorage.reset(eval(STORAGE_NAME)) //Reset the local storage just in case
+								var localStorage = new jSpaghetti.Storage(eval(STORAGE_NAME))
+								localStorage.reset(function(){
+									if(callback)
+									callback(currentSequence)
+								}) 
 								if (currentModule.config.debugMode) showDebugMessage("Sequence is reset (" + moduleName + ":" + sequenceName + ")", " ")
 								currentSequence.events.dispatchEvent(getEvent(SEQUENCE_RESET))
 							}, DEFAULT_DELAY * 5)
@@ -424,23 +434,24 @@
 			}
 			return currentModule
 		},
-		Storage: function(){ /*Customizable Storage class*/
-			this.get = function(storageName, callback){
+		Storage: function(storageName){ /*Customizable Storage class*/
+			this.get = function(callback){
 				if(callback)
-				callback(JSON.parse(sessionStorage.getItem(storageName)))
+				runAssyncronously(function(){
+					callback(JSON.parse(sessionStorage.getItem(storageName)))
+				})
 			}
-			this.set = function(storageName, data, callback){
+			this.set = function(data, callback){
 				if(callback)
-				callback()
+				runAssyncronously(callback)
 				sessionStorage.setItem(storageName, JSON.stringify(data))
 			}
-			this.reset = function(storageName, callback){
+			this.reset = function(callback){
 				if(callback)
-				callback()
+				runAssyncronously(callback)
 				sessionStorage.removeItem(storageName)
 			}
 		}
 	}
-
 	return $jSpaghetti = jSpaghetti
 })()
