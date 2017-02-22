@@ -9,6 +9,13 @@ jSpaghetti is a Javascript API to build automation scripts with sequential and d
 
 The project came from the necessity of an easy way to write browser javascript bots. The project was generalized to cover other purposes, though.
 
+## Build
+As this project is actually a huge single js file, it was broken into parts in order to be more readable. To "compile" the project just process the file main.js with [Filemash](https://github.com/gresendesa/filemash) script using the following command:
+
+```
+python3 filemash.py main.js > jSpaghetti.js
+```
+
 ## Installation
 
 Just include the file on document page, like:
