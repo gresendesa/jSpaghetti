@@ -8,6 +8,11 @@ function getSharedFunctions(moduleName, sequenceName){
 			if (jSpaghetti.modules[moduleName].config.debugMode) showDebugMessage("Signal sent (" + moduleName + ":" + sequenceName + "): ", message)
 			jSpaghetti.modules[moduleName].sequences[sequenceName].signalChannel = message
 		},
+		next: function(message){
+			if (jSpaghetti.modules[moduleName].config.debugMode) showDebugMessage("Next called (" + moduleName + ":" + sequenceName + "): ", message)
+			jSpaghetti.modules[moduleName].sequences[sequenceName].$ = message
+			listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
+		},
 		getObjectSnapshot: getObjectSnapshot
 	}
 }
