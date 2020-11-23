@@ -101,7 +101,10 @@ function(commonData){
 					//setTimeout makes asynchronous calls to prevent stack growing
 					runAssyncronously(function(){
 						currentSequence.state.shared.$ = currentModule.procedures[currentCommand](currentSequence.state.shared, getSharedFunctions(moduleName, sequenceName)) //It executes defined procedure strictly speaking
-						listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
+						//If the functions returns nothing, then the next state is not called automatically
+						if(currentSequence.state.shared.$!==undefined){
+							listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
+						}
 					})
 				} else {
 					dispatchExitCommand(moduleName, sequenceName)
