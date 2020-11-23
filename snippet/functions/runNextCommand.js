@@ -102,7 +102,7 @@ function(commonData){
 					runAssyncronously(function(){
 						currentSequence.state.shared.$ = currentModule.procedures[currentCommand](currentSequence.state.shared, getSharedFunctions(moduleName, sequenceName)) //It executes defined procedure strictly speaking
 						//If the functions returns nothing, then the next state is not called automatically
-						if(currentSequence.state.shared.$!==undefined){
+						if(currentSequence.state.shared.$ !== undefined){
 							listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
 						}
 					})

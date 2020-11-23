@@ -1,5 +1,5 @@
 /*Route class*/
-@> "../class/Route.js"
+{% "../class/Route.js" %}
 
 /*State class*/
-@> "../class/State.js"
+{% "../class/State.js" %}

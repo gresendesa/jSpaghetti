@@ -17,7 +17,7 @@ function(lastState){
 			//It checks the intructions syntax
 			var resultSyntaxCheck = checkInstructionsSyntax(currentSequence.instructions, currentModule.procedures)
 
-			var runNextCommand = @> "runNextCommand.js"
+			var runNextCommand = {% "runNextCommand.js" %}
 			//-------------------//
 			//--Data recovering--//
 			//-------------------//

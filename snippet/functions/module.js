@@ -8,8 +8,8 @@ function(moduleName){ //This function returns the module object especified by mo
 		},
 		sequences: {},
 		procedures: {},
-		procedure: @> "procedure.js",
-		sequence: @> "sequence.js"
+		procedure: {% "procedure.js" %},
+		sequence: {% "sequence.js" %}
 	}
 	if (currentModule == undefined){ //It defines a new module if it do not exist yet
 		jSpaghetti.modules[moduleName] = module

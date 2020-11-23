@@ -9,8 +9,8 @@ function(sequenceName){
 		state: initialState,
 		signalChannel: null,
 		instructions: [],
-		run: @> "run.js",
-		reset: @> "reset.js"
+		run: {% "run.js" %},
+		reset: {% "reset.js" %}
 	}
 	if (currentSequence == undefined){ //It defines a new sequence object if it do not exist yet
 		currentModule.sequences[sequenceName] = sequence
