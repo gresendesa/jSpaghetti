@@ -3,30 +3,30 @@ var module = $jSpaghetti.module("myModule")
 //module.config.debugMode = true
 //module.config.developerMode = true
 
-module.procedure("A", function(shared, func){
+module.procedure("A", function(shared, hooks){
     console.log("brown fox jumps ")
     return false
 })
-module.procedure("B", function(shared, func){
+module.procedure("B", function(shared, hooks){
     console.log("over the lazy dog --> ", shared.$)
     setTimeout(() => {
-      func.next("opa")
+      hooks.next("opa")
     }, 2000)
 })
-module.procedure("C", function(shared, func){
+module.procedure("C", function(shared, hooks){
     console.log("quick ")
   	return false
 })
-module.procedure("D", function(shared, func){
+module.procedure("D", function(shared, hooks){
     console.log("here D --> last returned:", shared.$)
     shared.foo = 70
     return false
 })
-module.procedure("E", function(shared, func){
+module.procedure("E", function(shared, hooks){
     console.log("here E. foo =",shared.foo)
     return "fkapitalism"
 })
-module.procedure("F", function(shared, func){
+module.procedure("F", function(shared, hooks){
     console.log("here F --> last returned:", shared.$)
     return "@gmail.com"
 })

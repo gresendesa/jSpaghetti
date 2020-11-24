@@ -8,10 +8,10 @@ module.procedure("B", function(){
     console.log("over the lazy dog")
     return false
 })
-module.procedure("C", function(shared, func){
+module.procedure("C", function(shared, hooks){
     console.log("quick ")
   	setTimeout(() => {
-  		func.next()
+  		hooks.next()
   	}, 3000);
 })
 

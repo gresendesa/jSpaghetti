@@ -8,7 +8,7 @@ module.procedure("B", function(){
     console.log("over the lazy dog")
     return true
 })
-module.procedure("C", function(shared, func){
+module.procedure("C", function(shared, hooks){
     console.log("quick ")
     return true
 })
