@@ -1,5 +1,9 @@
-[jSpaghetti](https://github.com/gresendesa/jSpaghetti)
+[jSpaghetti](https://github.com/gresendesa/jSpaghetti) 0.1.6
 =================================================
+
+## Changelog
+
+* `23 november 2020` the `next(message)` function is added to add a asyncrousness to the states transition. If a state returns nothing, then the transition is not performed automatically. It will be necessary to call the refered function to run the transition.
 
 ## Synopsis
 
@@ -87,17 +91,18 @@ Internal commands can change the script behavior.
 #### Running
 * To execute a sequence use something like this:
 ```js
-$jSpaghetti.module("myModule").procedure("myProcedureBar").run()
+$jSpaghetti.module("myModule").sequence("mySequence").run()
 ```
 
 #### Stopping
 ```js
-$jSpaghetti.module("myModule").procedure("myProcedureBar").reset()
+$jSpaghetti.module("myModule").sequence("mySequence").reset()
 ```
 #### Debugging
-To see what is happening during the sequence execution, turn on the debug mode. The debugging log will be shown on browser console.
+To see what is happening during the sequence execution, turn on the debug mode. The debugging log will be shown on browser console. Developer mode show as much details as possible.
 ```js
 $jSpaghetti.module("myModule").config.debugMode = true
+$jSpaghetti.module("myModule").config.developerMode = true
 ```
 
 ### Shared data
@@ -124,6 +129,8 @@ $jSpaghetti.module("myModule").procedure("myProcedureBar").events.addEventListen
 ```js
 var module = $jSpaghetti.module("myModule")
 
+sequence.reset()
+
 module.procedure("A", function(){
     console.log("brown fox jumps ")
 })
@@ -137,7 +144,7 @@ module.procedure("C", function(){
 var sequence = module.sequence("showPhrase")
 sequence.instructions = [
     {0: "C"},
-    {"foo": ["A", "B"]}
+    {"foo": ["A", "B", "_exit"]}
 ]
 
 sequence.run()

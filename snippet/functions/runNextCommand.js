@@ -60,7 +60,8 @@ function(commonData){
 									} else {
 										currentSequence.state.route = nextRoute
 									}
-									listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
+									//listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
+									currentModule.sequences[sequenceName].events.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
 								}
 							}, DEFAULT_DELAY)
 						}
@@ -88,7 +89,8 @@ function(commonData){
 						if (redirect){
 							if (currentModule.config.debugMode) showDebugMessage("Flow redirected to \"" + redirect + "\" (" + moduleName + ":" + sequenceName + ")", " ")
 						}
-						listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
+						//listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
+						currentModule.sequences[sequenceName].events.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
 						break
 					default: break
 				}
@@ -100,15 +102,18 @@ function(commonData){
 					if (currentModule.config.debugMode) showDebugMessage("Running command", "\"" + moduleName + ":" + sequenceName + ":" + currentInstruction + ":" + currentCommandInstructionPosition + ":" + currentCommand + "\"")
 					//setTimeout makes asynchronous calls to prevent stack growing
 					runAssyncronously(function(){
-						currentSequence.state.shared.$ = currentModule.procedures[currentCommand](currentSequence.state.shared, getSharedFunctions(moduleName, sequenceName)) //It executes defined procedure strictly speaking
+						const value_returned = currentModule.procedures[currentCommand](currentSequence.state.shared, getSharedFunctions(moduleName, sequenceName)) //It executes defined procedure strictly speaking
 						//If the functions returns nothing, then the next state is not called automatically
-						if(currentSequence.state.shared.$ !== undefined){
-							listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
+						if(value_returned !== undefined){
+							//listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
+							currentSequence.state.shared.$ = value_returned
+							currentModule.sequences[sequenceName].events.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
 						}
 					})
 				} else {
 					dispatchExitCommand(moduleName, sequenceName)
-					listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
+					//listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
+					currentModule.sequences[sequenceName].events.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
 				}
 				break
 		}

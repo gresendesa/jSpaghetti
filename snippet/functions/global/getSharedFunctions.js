@@ -10,8 +10,9 @@ function getSharedFunctions(moduleName, sequenceName){
 		},
 		next: function(message){
 			if (jSpaghetti.modules[moduleName].config.debugMode) showDebugMessage("Next called (" + moduleName + ":" + sequenceName + "): ", message)
-			jSpaghetti.modules[moduleName].sequences[sequenceName].$ = message
-			listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
+			jSpaghetti.modules[moduleName].sequences[sequenceName].state.shared.$ = message
+			//listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
+			jSpaghetti.modules[moduleName].sequences[sequenceName].events.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
 		},
 		getObjectSnapshot: getObjectSnapshot
 	}

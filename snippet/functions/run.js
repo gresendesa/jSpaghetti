@@ -8,11 +8,8 @@ function(lastState){
 				jSpaghetti.state.running = true
 				startStateSaver()
 			}
-			var listener = document.createDocumentFragment() //Disposable element used to listen last command terminated event
-			listener.addEventListener(LAST_COMMAND_TERMINATED, function(){ //It listens for last command terminated event
-				if (currentModule.config.developerMode) showDebugMessage("Last command terminated event dispatched (" + moduleName + ":" + sequenceName + "): ", getObjectSnapshot(currentSequence.state))
-				currentModule.sequences[sequenceName].run(currentSequence.state)
-			})
+			//var listener = document.createDocumentFragment() //Disposable element used to listen last command terminated event
+			//listener.addEventListener(LAST_COMMAND_TERMINATED, function(){ //It listens for last command terminated event
 
 			//It checks the intructions syntax
 			var resultSyntaxCheck = checkInstructionsSyntax(currentSequence.instructions, currentModule.procedures)
