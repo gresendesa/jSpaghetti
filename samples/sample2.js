@@ -33,8 +33,6 @@ module.procedure("F", function(shared, hooks){
 
 var sequence = module.sequence("showPhrase")
 
-sequence.reset()
-
 sequence.instructions = [
     {0: "C"},
     {"foo": ["A","B","D",{"gotoif":["SHARED.foo>=70","bar","baz"]}]},
@@ -42,6 +40,7 @@ sequence.instructions = [
     {"baz": ["F"]}
 ]
 
-sequence.run()
-
+sequence.reset((seq) => {
+    seq.run()
+})
 //Output: quick brown fox jumps over the lazy dog

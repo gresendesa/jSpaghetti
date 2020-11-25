@@ -17,13 +17,13 @@ module.procedure("C", function(shared, hooks){
 
 var sequence = module.sequence("showPhrase")
 
-sequence.reset()
-
 sequence.instructions = [
     {0: "C"},
     {"foo": ["A", "B"]}
 ]
 
-sequence.run()
+sequence.reset((seq) => {
+  seq.run()
+})
 
 //Output: quick brown fox jumps over the lazy dog

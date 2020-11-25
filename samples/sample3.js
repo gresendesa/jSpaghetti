@@ -15,14 +15,14 @@ module.procedure("baz", function(shared, func){
 
 var sequence = module.sequence("example")
 
-sequence.reset()
-
 sequence.instructions = [
     {"@init": ["foo",{"wait": 5000}]},
     {"@run": ["baz"]},
     {"@finish": ["_exit"]}
 ]
 
-sequence.run()
+sequence.reset((seq) => {
+	seq.run()
+})
 
 //Output: quick brown fox jumps over the lazy dog
