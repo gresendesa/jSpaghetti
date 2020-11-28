@@ -1,5 +1,5 @@
 const LAST_COMMAND_TERMINATED = "lastCommandTerminated"
-const PROCEDURE_RELEASED = "procedureReleased"
+const SEQUENCE_RELEASED = "sequenceReleased"
 const PAGE_IS_ABOUT_TO_RELOAD = "beforeunload"
 const SEQUENCE_TERMINATED = "terminated"
 const SEQUENCE_RESET = "reset"

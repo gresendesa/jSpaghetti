@@ -112,7 +112,7 @@ function(commonData){
 						} else {
 							currentSequence.state.callLastProcedure = true
 						}
-						currentModule.sequences[sequenceName].events.dispatchEvent(getEvent(PROCEDURE_RELEASED))
+						currentModule.sequences[sequenceName].events.dispatchEvent(getEvent(SEQUENCE_RELEASED))
 					})
 				} else {
 					dispatchExitCommand(moduleName, sequenceName)

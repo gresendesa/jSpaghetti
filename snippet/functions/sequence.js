@@ -20,7 +20,7 @@ function(sequenceName){
 		currentModule.sequences[sequenceName].run(currentSequence.state)
 	})
 
-	sequence.events.addEventListener(PROCEDURE_RELEASED, (event) => { //It listens for last command terminated event
+	sequence.events.addEventListener(SEQUENCE_RELEASED, (event) => { //It listens for last command terminated event
 		event.stopPropagation()
 		if (currentModule.config.developerMode) showDebugMessage("Procedure released event dispatched (" + moduleName + ":" + sequenceName + "): ", getObjectSnapshot(currentSequence.state))
 		currentModule.sequences[sequenceName].released = true

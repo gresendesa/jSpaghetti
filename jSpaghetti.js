@@ -1,6 +1,6 @@
 (function(){
 	const LAST_COMMAND_TERMINATED = "lastCommandTerminated"
-const PROCEDURE_RELEASED = "procedureReleased"
+const SEQUENCE_RELEASED = "sequenceReleased"
 const PAGE_IS_ABOUT_TO_RELOAD = "beforeunload"
 const SEQUENCE_TERMINATED = "terminated"
 const SEQUENCE_RESET = "reset"
@@ -195,7 +195,6 @@ function getSharedFunctions(moduleName, sequenceName){
 					}
 				}, 100)
 			}
-				
 		},
 		getObjectSnapshot: getObjectSnapshot
 	}
@@ -410,7 +409,7 @@ function runAssyncronously(callback){
 						} else {
 							currentSequence.state.callLastProcedure = true
 						}
-						currentModule.sequences[sequenceName].events.dispatchEvent(getEvent(PROCEDURE_RELEASED))
+						currentModule.sequences[sequenceName].events.dispatchEvent(getEvent(SEQUENCE_RELEASED))
 					})
 				} else {
 					dispatchExitCommand(moduleName, sequenceName)
@@ -475,7 +474,7 @@ function runAssyncronously(callback){
 		currentModule.sequences[sequenceName].run(currentSequence.state)
 	})
 
-	sequence.events.addEventListener(PROCEDURE_RELEASED, (event) => { //It listens for last command terminated event
+	sequence.events.addEventListener(SEQUENCE_RELEASED, (event) => { //It listens for last command terminated event
 		event.stopPropagation()
 		if (currentModule.config.developerMode) showDebugMessage("Procedure released event dispatched (" + moduleName + ":" + sequenceName + "): ", getObjectSnapshot(currentSequence.state))
 		currentModule.sequences[sequenceName].released = true

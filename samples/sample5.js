@@ -34,7 +34,6 @@ sequence.instructions = [
     {"@finish": ["_exit"]}
 ]
 
-sequence.reset()
 sequence.events.addEventListener("terminated", function(){
 	sequence.reset()
 })

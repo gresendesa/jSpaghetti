@@ -25,7 +25,6 @@ function getSharedFunctions(moduleName, sequenceName){
 					}
 				}, 100)
 			}
-				
 		},
 		getObjectSnapshot: getObjectSnapshot
 	}
