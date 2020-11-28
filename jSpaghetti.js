@@ -179,6 +179,7 @@ function getSharedFunctions(moduleName, sequenceName){
 		},
 		next: function(message){
 			if (jSpaghetti.modules[moduleName].config.debugMode) showDebugMessage("Next called (" + moduleName + ":" + sequenceName + "): ", message)
+			jSpaghetti.modules[moduleName].sequences[sequenceName].state.callLastProcedure = false
 			jSpaghetti.modules[moduleName].sequences[sequenceName].state.shared.$ = message
 			//listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
 			jSpaghetti.modules[moduleName].sequences[sequenceName].events.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
@@ -277,14 +278,6 @@ function runAssyncronously(callback){
 			}
 			//var listener = document.createDocumentFragment() //Disposable element used to listen last command terminated event
 			//listener.addEventListener(LAST_COMMAND_TERMINATED, function(){ //It listens for last command terminated event
-			currentModule.sequences[sequenceName].events.addEventListener(LAST_COMMAND_TERMINATED, () => { //It listens for last command terminated event
-				//currentModule.sequences[sequenceName].events.removeEventListener(LAST_COMMAND_TERMINATED, () => {
-				this.removeEventListener(LAST_COMMAND_TERMINATED, () => {
-					if (currentModule.config.developerMode) showDebugMessage("Last command terminated event dispatched (" + moduleName + ":" + sequenceName + "): ", getObjectSnapshot(currentSequence.state))
-					currentModule.sequences[sequenceName].run(currentSequence.state)
-				})
-				//})
-			})
 
 			//It checks the intructions syntax
 			var resultSyntaxCheck = checkInstructionsSyntax(currentSequence.instructions, currentModule.procedures)
@@ -395,9 +388,12 @@ function runAssyncronously(callback){
 					runAssyncronously(function(){
 						const value_returned = currentModule.procedures[currentCommand](currentSequence.state.shared, getSharedFunctions(moduleName, sequenceName)) //It executes defined procedure strictly speaking
 						//If the functions returns nothing, then the next state is not called automatically
-						if(currentSequence.state.shared.$ !== undefined){
+						if(value_returned !== undefined){
 							//listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
+							currentSequence.state.shared.$ = value_returned
 							currentModule.sequences[sequenceName].events.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
+						} else {
+							currentSequence.state.callLastProcedure = true
 						}
 					})
 				} else {
@@ -456,6 +452,13 @@ function runAssyncronously(callback){
 	}, DEFAULT_DELAY * 5)
 }
 	}
+
+	sequence.events.addEventListener(LAST_COMMAND_TERMINATED, (event) => { //It listens for last command terminated event
+		event.stopPropagation()
+		if (currentModule.config.developerMode) showDebugMessage("Last command terminated event dispatched (" + moduleName + ":" + sequenceName + "): ", getObjectSnapshot(currentSequence.state))
+		currentModule.sequences[sequenceName].run(currentSequence.state)
+	})
+
 	if (currentSequence == undefined){ //It defines a new sequence object if it do not exist yet
 		currentModule.sequences[sequenceName] = sequence
 		currentSequence = currentModule.sequences[sequenceName]

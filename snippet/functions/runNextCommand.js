@@ -108,6 +108,8 @@ function(commonData){
 							//listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
 							currentSequence.state.shared.$ = value_returned
 							currentModule.sequences[sequenceName].events.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
+						} else {
+							currentSequence.state.callLastProcedure = true
 						}
 					})
 				} else {
