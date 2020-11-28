@@ -101,6 +101,7 @@ function(commonData){
 					currentSequence.state.route = nextRoute
 					if (currentModule.config.debugMode) showDebugMessage("Running command", "\"" + moduleName + ":" + sequenceName + ":" + currentInstruction + ":" + currentCommandInstructionPosition + ":" + currentCommand + "\"")
 					//setTimeout makes asynchronous calls to prevent stack growing
+					currentSequence.released = false
 					runAssyncronously(function(){
 						const value_returned = currentModule.procedures[currentCommand](currentSequence.state.shared, getSharedFunctions(moduleName, sequenceName)) //It executes defined procedure strictly speaking
 						//If the functions returns nothing, then the next state is not called automatically
@@ -111,6 +112,7 @@ function(commonData){
 						} else {
 							currentSequence.state.callLastProcedure = true
 						}
+						currentModule.sequences[sequenceName].events.dispatchEvent(getEvent(PROCEDURE_RELEASED))
 					})
 				} else {
 					dispatchExitCommand(moduleName, sequenceName)

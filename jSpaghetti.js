@@ -1,5 +1,6 @@
 (function(){
 	const LAST_COMMAND_TERMINATED = "lastCommandTerminated"
+const PROCEDURE_RELEASED = "procedureReleased"
 const PAGE_IS_ABOUT_TO_RELOAD = "beforeunload"
 const SEQUENCE_TERMINATED = "terminated"
 const SEQUENCE_RESET = "reset"
@@ -178,11 +179,23 @@ function getSharedFunctions(moduleName, sequenceName){
 			jSpaghetti.modules[moduleName].sequences[sequenceName].signalChannel = message
 		},
 		next: function(message){
-			if (jSpaghetti.modules[moduleName].config.debugMode) showDebugMessage("Next called (" + moduleName + ":" + sequenceName + "): ", message)
-			jSpaghetti.modules[moduleName].sequences[sequenceName].state.callLastProcedure = false
-			jSpaghetti.modules[moduleName].sequences[sequenceName].state.shared.$ = message
-			//listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
-			jSpaghetti.modules[moduleName].sequences[sequenceName].events.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
+			const callback = () => {
+				if (jSpaghetti.modules[moduleName].config.debugMode) showDebugMessage("Next called (" + moduleName + ":" + sequenceName + "): ", message)
+				jSpaghetti.modules[moduleName].sequences[sequenceName].state.callLastProcedure = false
+				jSpaghetti.modules[moduleName].sequences[sequenceName].state.shared.$ = message
+				jSpaghetti.modules[moduleName].sequences[sequenceName].events.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
+			}
+			if(jSpaghetti.modules[moduleName].sequences[sequenceName].released){
+				callback()
+			} else {
+				const interval = setInterval(() => {
+					if(jSpaghetti.modules[moduleName].sequences[sequenceName].released){
+						clearInterval(interval)
+						callback()
+					}
+				}, 100)
+			}
+				
 		},
 		getObjectSnapshot: getObjectSnapshot
 	}
@@ -264,6 +277,7 @@ function runAssyncronously(callback){
 		module: currentModule,
 		events: document.createDocumentFragment(),
 		state: initialState,
+		released: true,
 		signalChannel: null,
 		instructions: [],
 		run: function(lastState){
@@ -385,6 +399,7 @@ function runAssyncronously(callback){
 					currentSequence.state.route = nextRoute
 					if (currentModule.config.debugMode) showDebugMessage("Running command", "\"" + moduleName + ":" + sequenceName + ":" + currentInstruction + ":" + currentCommandInstructionPosition + ":" + currentCommand + "\"")
 					//setTimeout makes asynchronous calls to prevent stack growing
+					currentSequence.released = false
 					runAssyncronously(function(){
 						const value_returned = currentModule.procedures[currentCommand](currentSequence.state.shared, getSharedFunctions(moduleName, sequenceName)) //It executes defined procedure strictly speaking
 						//If the functions returns nothing, then the next state is not called automatically
@@ -395,6 +410,7 @@ function runAssyncronously(callback){
 						} else {
 							currentSequence.state.callLastProcedure = true
 						}
+						currentModule.sequences[sequenceName].events.dispatchEvent(getEvent(PROCEDURE_RELEASED))
 					})
 				} else {
 					dispatchExitCommand(moduleName, sequenceName)
@@ -457,6 +473,12 @@ function runAssyncronously(callback){
 		event.stopPropagation()
 		if (currentModule.config.developerMode) showDebugMessage("Last command terminated event dispatched (" + moduleName + ":" + sequenceName + "): ", getObjectSnapshot(currentSequence.state))
 		currentModule.sequences[sequenceName].run(currentSequence.state)
+	})
+
+	sequence.events.addEventListener(PROCEDURE_RELEASED, (event) => { //It listens for last command terminated event
+		event.stopPropagation()
+		if (currentModule.config.developerMode) showDebugMessage("Procedure released event dispatched (" + moduleName + ":" + sequenceName + "): ", getObjectSnapshot(currentSequence.state))
+		currentModule.sequences[sequenceName].released = true
 	})
 
 	if (currentSequence == undefined){ //It defines a new sequence object if it do not exist yet

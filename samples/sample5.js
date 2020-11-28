@@ -1,37 +1,41 @@
 var module = $jSpaghetti.module("myModule")
 
 module.config.debugMode = true
-//module.config.developerMode = true
+module.config.developerMode = true
 
 module.procedure("foo", function(shared, hooks){
-    console.log("message-foo")
-    return true
+    console.log("inside foo")
+    return null
 })
 
 module.procedure("baz", function(shared, hooks){
-    console.log("message-baz")
     setTimeout(() => {
-    	hooks.next("bouy");
-    }, 5000);
+        shared.ok = false
+        hooks.next("pey")
+    },5000)
 })
 
 module.procedure("bar", function(shared, hooks){
-    console.log("message-bar")
-    return true
+    console.log("inside bar")
+    return null
+})
+
+module.procedure("boi", function(shared, hooks){
+    console.log("inside boi")
+    return null
 })
 
 
 var sequence = module.sequence("example")
 
 sequence.instructions = [
-    {"@init": ["foo"]},
-    {"@run": ["baz","bar",{"wait": 5000}]},
+    {"@init": ["foo","baz",{"gotoif":["!*.ok","@finish"]}]},
+    {"@go": ["bar","boi"]},
     {"@finish": ["_exit"]}
 ]
 
+sequence.reset()
 sequence.events.addEventListener("terminated", function(){
 	sequence.reset()
 })
 sequence.run()
-
-//Output: quick brown fox jumps over the lazy dog

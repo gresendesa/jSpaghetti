@@ -40,7 +40,8 @@ sequence.instructions = [
     {"baz": ["F"]}
 ]
 
-sequence.reset((seq) => {
-    seq.run()
+sequence.events.addEventListener("terminated", function(){
+    sequence.reset()
 })
+sequence.run()
 //Output: quick brown fox jumps over the lazy dog
