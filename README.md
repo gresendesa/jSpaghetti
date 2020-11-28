@@ -1,9 +1,10 @@
-[jSpaghetti](https://github.com/gresendesa/jSpaghetti) 0.1.6
+[jSpaghetti](https://github.com/gresendesa/jSpaghetti) 1.0.0
 =================================================
 
 ## Changelog
 
-* `23 november 2020` the `next(message)` function is added to add a asyncrousness to the states transition. If a state returns nothing, then the transition is not performed automatically. It will be necessary to call the refered function to run the transition.
+* `28 november 2020` SOON: `{"wait": "_forTheSignal"}` willl be removed. `_exit` will be replaced by `EXIT`. `_forPageToReload` will be replaced by `page-reload`
+* `23 november 2020` the `next(message)` hook is added to add a asyncrousness to the states transition. If a state returns nothing, then the transition is not performed automatically. It will be necessary to call the refered function to run the transition.
 
 ## Synopsis
 
