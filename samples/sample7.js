@@ -10,7 +10,10 @@ module.procedure("foo", function(shared, hooks){
 
 module.procedure("baz", function(shared, hooks){
     console.log("message-baz")
-    //hooks.next('baz-returned')
+    shared.count++
+    if(shared.count>10){
+        hooks.next('baz-returned')
+    }
     return location.reload()
 })
 
