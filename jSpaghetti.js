@@ -181,10 +181,12 @@ function getSharedFunctions(moduleName, sequenceName){
 		next: function(message){
 			const callback = () => {
 				if (jSpaghetti.modules[moduleName].config.debugMode) showDebugMessage("Next called (" + moduleName + ":" + sequenceName + "): ", message)
-				jSpaghetti.modules[moduleName].sequences[sequenceName].state.callLastProcedure = false
-				jSpaghetti.modules[moduleName].sequences[sequenceName].state.shared.$ = message
+				//jSpaghetti.modules[moduleName].sequences[sequenceName].state.callLastProcedure = false
+				//jSpaghetti.modules[moduleName].sequences[sequenceName].state.shared.$ = message
 				jSpaghetti.modules[moduleName].sequences[sequenceName].events.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
 			}
+			jSpaghetti.modules[moduleName].sequences[sequenceName].state.callLastProcedure = false
+			jSpaghetti.modules[moduleName].sequences[sequenceName].state.shared.$ = message
 			if(jSpaghetti.modules[moduleName].sequences[sequenceName].released){
 				callback()
 			} else {
@@ -399,16 +401,19 @@ function runAssyncronously(callback){
 					if (currentModule.config.debugMode) showDebugMessage("Running command", "\"" + moduleName + ":" + sequenceName + ":" + currentInstruction + ":" + currentCommandInstructionPosition + ":" + currentCommand + "\"")
 					//setTimeout makes asynchronous calls to prevent stack growing
 					currentSequence.released = false
+					currentSequence.state.callLastProcedure = true
 					runAssyncronously(function(){
 						const value_returned = currentModule.procedures[currentCommand](currentSequence.state.shared, getSharedFunctions(moduleName, sequenceName)) //It executes defined procedure strictly speaking
 						//If the functions returns nothing, then the next state is not called automatically
 						if(value_returned !== undefined){
 							//listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
+							currentSequence.state.callLastProcedure = false
 							currentSequence.state.shared.$ = value_returned
 							currentModule.sequences[sequenceName].events.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
-						} else {
-							currentSequence.state.callLastProcedure = true
 						}
+						//} else {
+						//	currentSequence.state.callLastProcedure = true
+						//}
 						currentModule.sequences[sequenceName].events.dispatchEvent(getEvent(SEQUENCE_RELEASED))
 					})
 				} else {

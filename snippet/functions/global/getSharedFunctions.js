@@ -11,10 +11,12 @@ function getSharedFunctions(moduleName, sequenceName){
 		next: function(message){
 			const callback = () => {
 				if (jSpaghetti.modules[moduleName].config.debugMode) showDebugMessage("Next called (" + moduleName + ":" + sequenceName + "): ", message)
-				jSpaghetti.modules[moduleName].sequences[sequenceName].state.callLastProcedure = false
-				jSpaghetti.modules[moduleName].sequences[sequenceName].state.shared.$ = message
+				//jSpaghetti.modules[moduleName].sequences[sequenceName].state.callLastProcedure = false
+				//jSpaghetti.modules[moduleName].sequences[sequenceName].state.shared.$ = message
 				jSpaghetti.modules[moduleName].sequences[sequenceName].events.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
 			}
+			jSpaghetti.modules[moduleName].sequences[sequenceName].state.callLastProcedure = false
+			jSpaghetti.modules[moduleName].sequences[sequenceName].state.shared.$ = message
 			if(jSpaghetti.modules[moduleName].sequences[sequenceName].released){
 				callback()
 			} else {
