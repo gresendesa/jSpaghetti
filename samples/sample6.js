@@ -10,8 +10,8 @@ module.procedure("foo", function(shared, hooks){
 
 module.procedure("baz", function(shared, hooks){
     console.log("message-baz")
+    hooks.next('boo')
     location.reload()
-    return 'baz-returned'
 })
 
 module.procedure("bar", function(shared, hooks){
