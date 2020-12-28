@@ -25,9 +25,6 @@
 /*This function evaluates a Tomato expression*/
 {% "functions/global/evaluateExpression.js" %}
 
-//Start signal listener process
-{% "functions/global/startSignalListener.js" %}
-
 //It gets the functions that can be used into the procedures
 {% "functions/global/getSharedFunctions.js" %}
 

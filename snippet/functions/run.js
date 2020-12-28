@@ -25,11 +25,12 @@ function(lastState){
 				var localStorage = new jSpaghetti.Storage(eval(STORAGE_NAME)) //It sets the Storage object
 				localStorage.get(function(data){
 					if(data){
-						if (currentModule.config.developerMode) showDebugMessage("Data recovered from the local storage (" + moduleName + ":" + sequenceName + "): ", getObjectSnapshot(currentSequence.state))
+						if (currentModule.config.developerMode) showDebugMessage("Data recovered from the local storage (" + moduleName + ":" + sequenceName + "): ", getObjectSnapshot(data))
+						runNextCommand(data)
 					} else {
 						if (currentModule.config.developerMode) showDebugMessage("Data recovered from the initial state (" + moduleName + ":" + sequenceName + "): ", getObjectSnapshot(currentSequence.state))
+						runNextCommand(currentSequence.state)
 					}
-					runNextCommand(data)
 				})
 			}
 													

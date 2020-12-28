@@ -25,7 +25,7 @@ var sequence = module.sequence("example")
 sequence.instructions = [
     {"@init": ["foo"]},
     {"@run": ["baz","bar"]},
-    {"@finish": ["_exit"]}
+    {"@finish": [{"exit": true}]}
 ]
 
 sequence.events.addEventListener("terminated", function(){

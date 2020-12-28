@@ -3,6 +3,7 @@ var module = $jSpaghetti.module("myModule")
 module.config.debugMode = true
 module.config.developerMode = true
 
+
 module.procedure("foo", function(shared, hooks){
     console.log("inside foo")
     return null
@@ -29,9 +30,9 @@ module.procedure("boi", function(shared, hooks){
 var sequence = module.sequence("example")
 
 sequence.instructions = [
-    {"@init": ["foo","baz",{"gotoif":["!*.ok","@finish"]}]},
+    {"@init": ["foo","baz",{"jumpif":["!*.ok","@finish"]}]},
     {"@go": ["bar","boi"]},
-    {"@finish": ["_exit"]}
+    {"@finish": [{"exit": true}]}
 ]
 
 sequence.events.addEventListener("terminated", function(){

@@ -35,7 +35,7 @@ var sequence = module.sequence("showPhrase")
 
 sequence.instructions = [
     {0: "C"},
-    {"foo": ["A","B","D",{"gotoif":["SHARED.foo>=70","bar","baz"]}]},
+    {"foo": ["A","B","D",{"jumpif":["SHARED.foo>=70","bar","baz"]}]},
     {"bar": ["E"]},
     {"baz": ["F"]}
 ]

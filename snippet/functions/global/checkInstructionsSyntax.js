@@ -13,16 +13,13 @@ function checkInstructionsSyntax(instructions, procedures){
 						var internalComName = getFirstAttribName(instructions[i][instructionLabel][z])
 						if (INTERNAL_OBJECT_COMMANDS_LIST.indexOf(internalComName) == -1) return "Internal command \"" + internalComName + "\" is undefined"
 						var comContent = instructions[i][instructionLabel][z][internalComName]
-						if (internalComName == WAIT_COMMAND){
-							if (typeof(comContent) == 'object'){
+						if ((internalComName == EXIT_COMMAND) || (internalComName == WAIT_COMMAND)){
+							if (typeof(comContent) === 'object'){
 								var label = getFirstAttribName(comContent)
-								if (label == WAIT_FOR_THE_SIGNAL_FLAG){
-									if (!procedures.hasOwnProperty(comContent[label])) return "Procedure \"" + comContent[label] + "\" is undefined"
-								} else {
-									return "Label \"" + label + "\" is undefined"
-								}
+								return "Label \"" + label + "\" is undefined"
 							}
-						} else if (internalComName == GOTOIF_COMMAND){
+						} else
+						if (internalComName == GOTOIF_COMMAND){
 							if (Object.prototype.toString.call(comContent) == '[object Array]'){
 								if (comContent.length < 2) return "Internal command \"" + internalComName + "\" must receive an array that must have at least 2 positions"
 								for (var y = 1; y < comContent.length; y++) {

@@ -1,5 +1,7 @@
 var module = $jSpaghetti.module("myModule")
 
+module.config.debugMode = true
+
 module.procedure("A", function(){
     console.log("brown fox jumps ")
     return true
@@ -17,7 +19,7 @@ var sequence = module.sequence("showPhrase")
 
 sequence.instructions = [
     {0: "C"},
-    {"foo": ["A", "B"]}
+    {"foo": ["A", "B", {"exit": "2 == 2"}, "C"]}
 ]
 
 sequence.events.addEventListener("terminated", function(){

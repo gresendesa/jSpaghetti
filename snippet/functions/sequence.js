@@ -8,7 +8,6 @@ function(sequenceName){
 		events: document.createDocumentFragment(),
 		state: initialState,
 		released: true,
-		signalChannel: null,
 		instructions: [],
 		run: {% "run.js" %},
 		reset: {% "reset.js" %}

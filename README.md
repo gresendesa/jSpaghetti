@@ -1,10 +1,11 @@
-[jSpaghetti](https://github.com/gresendesa/jSpaghetti) 1.0.0
+[jSpaghetti](https://github.com/gresendesa/jSpaghetti) 2.0.0
 =================================================
 
 ## Changelog
 
-* `28 november 2020` SOON: `{"wait": "_forTheSignal"}` willl be removed. `_exit` will be replaced by `EXIT`. `_forPageToReload` will be replaced by `page-reload`
-* `23 november 2020` the `next(message)` hook is added to add a asyncrousness to the states transition. If a state returns nothing, then the transition is not performed automatically. It will be necessary to call the refered function to run the transition.
+* **2.0.0** `28 december 2020`: `{"wait": "_forTheSignal"}` removed. `_exit` replaced by `{"exit": <condition>}`, `{"gotoif": []}` replaced by `{"jumpif": []}`. Exit instruction is not supported by jumpif anymore.
+* **1.0.1** `28 november 2020` SOON: `{"wait": "_forTheSignal"}` will be removed. `_exit` will be replaced by `EXIT`. `_forPageToReload` will be replaced by `page-reload`
+* **1.0.0** `23 november 2020` the `next(message)` hook is added to add a asyncrousness to the states transition. If a state returns nothing, then the transition is not performed automatically. It will be necessary to call the refered function to run the transition.
 
 ## Synopsis
 
@@ -33,7 +34,7 @@ This code can be also injected on the document page using tools like Greasemonke
 Warning: This manual is just a sketch. Detailed manual coming soon
 
 ### Modules
-* Creating a new module
+* To assign a module object to a variable. If the module does not exist yet, it is created before assingment.
 ```js
 var moduleObject = $jSpaghetti.module("myModule")
 ```
@@ -74,19 +75,19 @@ sequenceObject.intructions = [
 ##### Commands
 Internal commands can change the script behavior.
 ```js 
-"_exit" //Finish the sequence execution
+{"exit": true} //Finish the sequence execution
+``` 
+```js 
+{"exit": "2 == 1"} //It does not finish the sequence execution because the condition returns false
 ``` 
 ```js 
 {"wait": 1000} //Wait the defined time in ms
 ``` 
 ```js 
-{"wait": "_forTheSignal"} //Wait until a signal is dispached
-``` 
-```js 
-{"wait": "_forPageToReload"} //Pause the sequence execution and resume after page is reloaded
+{"wait": "page-reload"} //Pause the sequence execution and resume after page is reloaded
 ```
 ```js 
-{"gotoif":["2 == 1", "step1", "labelX"]} // It redirects the program flow (In this case to the "labelX")
+{"jumpif":["2 == 1", "step1", "labelX"]} // It redirects the program flow to a sequence (In this case to the "labelX")
 ``` 
 
 #### Running
@@ -145,7 +146,7 @@ module.procedure("C", function(){
 var sequence = module.sequence("showPhrase")
 sequence.instructions = [
     {0: "C"},
-    {"foo": ["A", "B", "_exit"]}
+    {"foo": ["A", "B", {"exit": true}]}
 ]
 
 sequence.run()

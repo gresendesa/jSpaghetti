@@ -1,14 +1,14 @@
-var module = $jSpaghetti.module("myModule")
+var m = $jSpaghetti.module("myModule")
 
-module.config.debugMode = true
+m.config.debugMode = true
 //module.config.developerMode = true
 
-module.procedure("foo", function(shared, hooks){
+m.procedure("foo", function(shared, hooks){
     console.log("message-foo")
     return true
 })
 
-module.procedure("baz", function(shared, hooks){
+m.procedure("baz", function(shared, hooks){
     console.log("message-baz")
     shared.count++
     if(shared.count>10){
@@ -17,18 +17,18 @@ module.procedure("baz", function(shared, hooks){
     return location.reload()
 })
 
-module.procedure("bar", function(shared, hooks){
+m.procedure("bar", function(shared, hooks){
     console.log("message-bar", "last return:", shared.$)
     return true
 })
 
 
-var sequence = module.sequence("example")
+var sequence = m.sequence("example")
 
 sequence.instructions = [
     {"@init": ["foo"]},
-    {"@run": ["baz","bar"]},
-    {"@finish": ["_exit"]}
+    {"@run": ["baz","bar",{"wait":"page-reload"}]},
+    {"@finish": [{"exit":true}]}
 ]
 
 sequence.events.addEventListener("terminated", function(){
