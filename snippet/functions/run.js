@@ -26,6 +26,9 @@ function(lastState){
 				localStorage.get(function(data){
 					if(data){
 						if (currentModule.config.developerMode) showDebugMessage("Data recovered from the local storage (" + moduleName + ":" + sequenceName + "): ", getObjectSnapshot(data))
+						if(data.shared){
+							data.shared = { ...currentSequence.state.shared, ...data.shared }
+						}
 						runNextCommand(data)
 					} else {
 						if (currentModule.config.developerMode) showDebugMessage("Data recovered from the initial state (" + moduleName + ":" + sequenceName + "): ", getObjectSnapshot(currentSequence.state))

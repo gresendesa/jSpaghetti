@@ -240,7 +240,7 @@ function runAssyncronously(callback){
 		sequence: function(sequenceName){
 	var currentSequence = currentModule.sequences[sequenceName]
 	var initialRoute = new Route(0, 0)
-	var initialState = new State(initialRoute, {$: undefined}, null, false)
+	var initialState = new State(initialRoute, {}, null, false)
 	var sequence = {
 		name: sequenceName,
 		module: currentModule,
@@ -393,6 +393,9 @@ function runAssyncronously(callback){
 				localStorage.get(function(data){
 					if(data){
 						if (currentModule.config.developerMode) showDebugMessage("Data recovered from the local storage (" + moduleName + ":" + sequenceName + "): ", getObjectSnapshot(data))
+						if(data.shared){
+							data.shared = { ...currentSequence.state.shared, ...data.shared }
+						}
 						runNextCommand(data)
 					} else {
 						if (currentModule.config.developerMode) showDebugMessage("Data recovered from the initial state (" + moduleName + ":" + sequenceName + "): ", getObjectSnapshot(currentSequence.state))

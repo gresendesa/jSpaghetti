@@ -11,15 +11,19 @@ module.procedure("B", function(){
     return true
 })
 module.procedure("C", function(shared, hooks){
+	console.log(shared)
     console.log("quick ")
     return true
 })
 
 var sequence = module.sequence("showPhrase")
 
+sequence.state.shared.num1 = 2
+sequence.state.shared.num2 = 1
+
 sequence.instructions = [
     {0: "C"},
-    {"foo": ["A", "B", {"exit": "2 == 2"}, "C"]}
+    {"foo": ["A", "B", {"exit": "*.num1 < *.num2"}, "C"]}
 ]
 
 sequence.events.addEventListener("terminated", function(){

@@ -1,7 +1,7 @@
 function(sequenceName){
 	var currentSequence = currentModule.sequences[sequenceName]
 	var initialRoute = new Route(0, 0)
-	var initialState = new State(initialRoute, {$: undefined}, null, false)
+	var initialState = new State(initialRoute, {}, null, false)
 	var sequence = {
 		name: sequenceName,
 		module: currentModule,
