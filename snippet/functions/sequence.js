@@ -15,6 +15,7 @@ function(sequenceName){
 
 	sequence.events.addEventListener(LAST_COMMAND_TERMINATED, (event) => { //It listens for last command terminated event
 		event.stopPropagation()
+		currentModule.sequences[sequenceName].events.dispatchEvent(getEvent(SEQUENCE_RELEASED))
 		if (currentModule.config.developerMode) showDebugMessage("Last command terminated event dispatched (" + moduleName + ":" + sequenceName + "): ", getObjectSnapshot(currentSequence.state))
 		currentModule.sequences[sequenceName].run(currentSequence.state)
 	})

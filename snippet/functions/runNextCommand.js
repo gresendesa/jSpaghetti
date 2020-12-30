@@ -98,11 +98,12 @@ function(commonData){
 						currentSequence.state.callLastProcedure = false
 						currentSequence.state.shared.$ = value_returned
 						currentModule.sequences[sequenceName].events.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
+					} else {
+						currentModule.sequences[sequenceName].events.dispatchEvent(getEvent(SEQUENCE_RELEASED))
 					}
 					//} else {
 					//	currentSequence.state.callLastProcedure = true
 					//}
-					currentModule.sequences[sequenceName].events.dispatchEvent(getEvent(SEQUENCE_RELEASED))
 				})
 				break
 		}
