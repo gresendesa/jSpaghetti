@@ -9,6 +9,6 @@ function(callback){
 			callback(currentSequence)
 		}) 
 		if (currentModule.config.debugMode) showDebugMessage("Sequence is reset (" + moduleName + ":" + sequenceName + ")", " ")
-		currentSequence.events.dispatchEvent(getEvent(SEQUENCE_RESET))
+		currentSequence.events.dispatchEvent(getEvent(SEQUENCE_RESET, currentSequence))
 	}, DEFAULT_DELAY * 5)
 }

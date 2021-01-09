@@ -13,7 +13,8 @@ sequence.instructions = [
     {"@init": ["test"]}
 ]
 
-sequence.events.addEventListener("terminated", function(){
+sequence.events.addEventListener("terminated", function(seq){
+	console.log("terminated sequence data", seq)
 	sequence.reset()
 })
 sequence.run()

@@ -37,11 +37,12 @@ sequence.instructions = [
     {0: "C"},
     {"foo": ["A","B","D",{"jumpif":["SHARED.foo>=70","bar","baz"]}]},
     {"bar": ["E"]},
-    {"baz": ["F"]}
+    {"baz": ["F", {"exit": true}]}
 ]
 
-sequence.events.addEventListener("terminated", function(){
-    sequence.reset()
+sequence.events.addEventListener("terminated", function(seq){
+    console.log("terminated sequence data", seq)
+    seq.detail.reset()
 })
 sequence.run()
 //Output: quick brown fox jumps over the lazy dog

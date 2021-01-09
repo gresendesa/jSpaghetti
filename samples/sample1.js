@@ -22,7 +22,8 @@ sequence.instructions = [
     {"foo": ["A", "B"]}
 ]
 
-sequence.events.addEventListener("terminated", function(){
+sequence.events.addEventListener("terminated", function(seq){
+  console.log("terminated sequence data", seq)
   sequence.reset()
 })
 sequence.run()

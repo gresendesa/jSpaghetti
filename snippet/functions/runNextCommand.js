@@ -41,7 +41,7 @@ function(commonData){
 										currentSequence.state.route = nextRoute
 									}
 									//listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
-									currentModule.sequences[sequenceName].events.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
+									currentSequence.events.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED, currentSequence))
 								}
 							}, DEFAULT_DELAY)
 						}
@@ -66,7 +66,7 @@ function(commonData){
 							if (currentModule.config.debugMode) showDebugMessage("Flow redirected to \"" + redirect + "\" (" + moduleName + ":" + sequenceName + ")", " ")
 						}
 						//listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
-						currentModule.sequences[sequenceName].events.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
+						currentSequence.events.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED, currentSequence))
 						break
 
 					case EXIT_COMMAND:
@@ -78,7 +78,7 @@ function(commonData){
 							if (currentModule.config.debugMode) showDebugMessage("Exit returned false (" + moduleName + ":" + sequenceName + ":" + currentInstruction + ":" + currentCommandInstructionPosition + ")", " ")
 							currentSequence.state.route = nextRoute	
 						}
-						currentModule.sequences[sequenceName].events.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
+						currentSequence.events.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED, currentSequence))
 						break
 					default: break
 				}
@@ -97,9 +97,9 @@ function(commonData){
 						//listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
 						currentSequence.state.callLastProcedure = false
 						currentSequence.state.shared.$ = value_returned
-						currentModule.sequences[sequenceName].events.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
+						currentSequence.events.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED, currentSequence))
 					} else {
-						currentModule.sequences[sequenceName].events.dispatchEvent(getEvent(SEQUENCE_RELEASED))
+						currentSequence.events.dispatchEvent(getEvent(SEQUENCE_RELEASED, currentSequence))
 					}
 					//} else {
 					//	currentSequence.state.callLastProcedure = true
@@ -112,7 +112,7 @@ function(commonData){
 		if (resultSyntaxCheck !== true) throwErrorNotification(resultSyntaxCheck + " (" + moduleName + ":" + sequenceName + ")", " ")
 		if (currentSequence.state.route == null) {
 			if (currentModule.config.debugMode) showDebugMessage("Sequence is terminated (" + moduleName + ":" + sequenceName + ")", " ")
-			currentSequence.events.dispatchEvent(getEvent(SEQUENCE_TERMINATED)) //It says that sequence is terminated
+			currentSequence.events.dispatchEvent(getEvent(SEQUENCE_TERMINATED, currentSequence)) //It says that sequence is terminated
 		}
 		
 	}

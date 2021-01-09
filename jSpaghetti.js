@@ -151,7 +151,7 @@ function getSharedFunctions(moduleName, sequenceName){
 				if (jSpaghetti.modules[moduleName].config.debugMode) showDebugMessage("Next called (" + moduleName + ":" + sequenceName + "): ", message)
 				//jSpaghetti.modules[moduleName].sequences[sequenceName].state.callLastProcedure = false
 				//jSpaghetti.modules[moduleName].sequences[sequenceName].state.shared.$ = message
-				jSpaghetti.modules[moduleName].sequences[sequenceName].events.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
+				jSpaghetti.modules[moduleName].sequences[sequenceName].events.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED, jSpaghetti.modules[moduleName].sequences[sequenceName]))
 			}
 			jSpaghetti.modules[moduleName].sequences[sequenceName].state.callLastProcedure = false
 			jSpaghetti.modules[moduleName].sequences[sequenceName].state.shared.$ = message
@@ -187,8 +187,8 @@ function getObjectSnapshot(obj){
 
 /*It creates a new event object*/
 /*It creates a new event object*/
-function getEvent(eventName){
-	var newEvent = new Event(eventName)
+function getEvent(eventName, sequence){
+	var newEvent = new CustomEvent(eventName, {detail: sequence})
 	return newEvent
 }
 
@@ -308,7 +308,7 @@ function runAssyncronously(callback){
 										currentSequence.state.route = nextRoute
 									}
 									//listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
-									currentModule.sequences[sequenceName].events.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
+									currentSequence.events.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED, currentSequence))
 								}
 							}, DEFAULT_DELAY)
 						}
@@ -333,7 +333,7 @@ function runAssyncronously(callback){
 							if (currentModule.config.debugMode) showDebugMessage("Flow redirected to \"" + redirect + "\" (" + moduleName + ":" + sequenceName + ")", " ")
 						}
 						//listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
-						currentModule.sequences[sequenceName].events.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
+						currentSequence.events.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED, currentSequence))
 						break
 
 					case EXIT_COMMAND:
@@ -345,7 +345,7 @@ function runAssyncronously(callback){
 							if (currentModule.config.debugMode) showDebugMessage("Exit returned false (" + moduleName + ":" + sequenceName + ":" + currentInstruction + ":" + currentCommandInstructionPosition + ")", " ")
 							currentSequence.state.route = nextRoute	
 						}
-						currentModule.sequences[sequenceName].events.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
+						currentSequence.events.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED, currentSequence))
 						break
 					default: break
 				}
@@ -364,9 +364,9 @@ function runAssyncronously(callback){
 						//listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
 						currentSequence.state.callLastProcedure = false
 						currentSequence.state.shared.$ = value_returned
-						currentModule.sequences[sequenceName].events.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
+						currentSequence.events.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED, currentSequence))
 					} else {
-						currentModule.sequences[sequenceName].events.dispatchEvent(getEvent(SEQUENCE_RELEASED))
+						currentSequence.events.dispatchEvent(getEvent(SEQUENCE_RELEASED, currentSequence))
 					}
 					//} else {
 					//	currentSequence.state.callLastProcedure = true
@@ -379,7 +379,7 @@ function runAssyncronously(callback){
 		if (resultSyntaxCheck !== true) throwErrorNotification(resultSyntaxCheck + " (" + moduleName + ":" + sequenceName + ")", " ")
 		if (currentSequence.state.route == null) {
 			if (currentModule.config.debugMode) showDebugMessage("Sequence is terminated (" + moduleName + ":" + sequenceName + ")", " ")
-			currentSequence.events.dispatchEvent(getEvent(SEQUENCE_TERMINATED)) //It says that sequence is terminated
+			currentSequence.events.dispatchEvent(getEvent(SEQUENCE_TERMINATED, currentSequence)) //It says that sequence is terminated
 		}
 		
 	}
@@ -423,14 +423,14 @@ function runAssyncronously(callback){
 			callback(currentSequence)
 		}) 
 		if (currentModule.config.debugMode) showDebugMessage("Sequence is reset (" + moduleName + ":" + sequenceName + ")", " ")
-		currentSequence.events.dispatchEvent(getEvent(SEQUENCE_RESET))
+		currentSequence.events.dispatchEvent(getEvent(SEQUENCE_RESET, currentSequence))
 	}, DEFAULT_DELAY * 5)
 }
 	}
 
 	sequence.events.addEventListener(LAST_COMMAND_TERMINATED, (event) => { //It listens for last command terminated event
 		event.stopPropagation()
-		currentModule.sequences[sequenceName].events.dispatchEvent(getEvent(SEQUENCE_RELEASED))
+		currentModule.sequences[sequenceName].events.dispatchEvent(getEvent(SEQUENCE_RELEASED, currentModule.sequences[sequenceName]))
 		if (currentModule.config.developerMode) showDebugMessage("Last command terminated event dispatched (" + moduleName + ":" + sequenceName + "): ", getObjectSnapshot(currentSequence.state))
 		currentModule.sequences[sequenceName].run(currentSequence.state)
 	})
