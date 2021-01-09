@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+	<meta content="utf-8" http-equiv="encoding">
+	<title>jSpaghetti health test</title>
+	<style type="text/css">
+		ul {
+			list-style-type: none;
+			margin: 0;
+			padding: 0;
+			font-size: 30px;
+		}
+		.success {
+			background-color: lightgreen;
+		}
+
+		.failure {
+			background-color: pink;
+		}
+
+		.info {
+			background-color: lightblue;
+		}
+
+	</style>
+</head>
+<body>
+	<div>
+		<h1>jSpaghetti health test</h1>
+		<small>It checks many aspects of the library in order to find some error</small>
+		<ul id="steps">
+			<!--<li class="success">✅ ok</li>
+			<li class="failure">❌ error</li>
+			<li class="info">ℹ info</li>-->
+		</ul>
+	</div>
+	<script type="text/javascript" src="jSpaghetti.js"></script>
+	<script type="text/javascript" src="sequence.js"></script>
+	<script type="text/javascript" src="health-test.js"></script>
+</body>
+</html>

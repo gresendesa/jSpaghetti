@@ -1,12 +1,12 @@
-var module = $jSpaghetti.module("myModule")
+var mod = $jSpaghetti.module("myModule")
 
-module.config.debugMode = true
+mod.config.debugMode = true
 
-module.procedure("C", function(shared, hooks){
+mod.procedure("C", function(shared, hooks){
     return true
 })
 
-var sequence = module.sequence("showPhrase")
+var sequence = mod.sequence("showPhrase")
 
 sequence.state.shared.num1 = 2
 sequence.state.shared.num2 = 1
@@ -15,9 +15,9 @@ sequence.instructions = [
     {0: "C"}
 ]
 
-sequence.events.addEventListener("terminated", function(){
+/*sequence.events.addEventListener("terminated", function(){
 	sequence.reset()
 })
-sequence.run()
+sequence.run()*/
 
 //Output: quick brown fox jumps over the lazy dog
