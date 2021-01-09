@@ -243,6 +243,7 @@ function runAssyncronously(callback){
 	var initialState = new State(initialRoute, {}, null, false)
 	var sequence = {
 		name: sequenceName,
+		hooks: getSharedFunctions(moduleName, sequenceName),
 		module: currentModule,
 		events: document.createDocumentFragment(),
 		state: initialState,
@@ -357,7 +358,7 @@ function runAssyncronously(callback){
 				currentSequence.released = false
 				currentSequence.state.callLastProcedure = true
 				runAssyncronously(function(){
-					const value_returned = currentModule.procedures[currentCommand](currentSequence.state.shared, getSharedFunctions(moduleName, sequenceName)) //It executes defined procedure strictly speaking
+					const value_returned = currentModule.procedures[currentCommand](currentSequence.state.shared, currentSequence.hooks) //It executes defined procedure strictly speaking
 					//If the functions returns nothing, then the next state is not called automatically
 					if(value_returned !== undefined){
 						//listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))

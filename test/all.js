@@ -1,13 +1,23 @@
-<!DOCTYPE html>
-<html>
-<head>
-	<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
-	<meta content="utf-8" http-equiv="encoding">
-	<title>jSpaghetti all test</title>
-</head>
-<body>
-	<code>open browser console (F12)</code>
-	<script type="text/javascript" src="jSpaghetti.js"></script>
-	<script type="text/javascript" src="all.js"></script>
-</body>
-</html>
+var module = $jSpaghetti.module("myModule")
+
+module.config.debugMode = true
+
+module.procedure("C", function(shared, hooks){
+    return true
+})
+
+var sequence = module.sequence("showPhrase")
+
+sequence.state.shared.num1 = 2
+sequence.state.shared.num2 = 1
+
+sequence.instructions = [
+    {0: "C"}
+]
+
+sequence.events.addEventListener("terminated", function(){
+	sequence.reset()
+})
+sequence.run()
+
+//Output: quick brown fox jumps over the lazy dog

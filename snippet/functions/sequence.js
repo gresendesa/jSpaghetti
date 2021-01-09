@@ -4,6 +4,7 @@ function(sequenceName){
 	var initialState = new State(initialRoute, {}, null, false)
 	var sequence = {
 		name: sequenceName,
+		hooks: getSharedFunctions(moduleName, sequenceName),
 		module: currentModule,
 		events: document.createDocumentFragment(),
 		state: initialState,

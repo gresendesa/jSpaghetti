@@ -91,7 +91,7 @@ function(commonData){
 				currentSequence.released = false
 				currentSequence.state.callLastProcedure = true
 				runAssyncronously(function(){
-					const value_returned = currentModule.procedures[currentCommand](currentSequence.state.shared, getSharedFunctions(moduleName, sequenceName)) //It executes defined procedure strictly speaking
+					const value_returned = currentModule.procedures[currentCommand](currentSequence.state.shared, currentSequence.hooks) //It executes defined procedure strictly speaking
 					//If the functions returns nothing, then the next state is not called automatically
 					if(value_returned !== undefined){
 						//listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
