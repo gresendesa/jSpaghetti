@@ -3,6 +3,7 @@
 
 ## Changelog
 
+* **2.0.1** remove onload listener after sequence terminated.
 * **2.0.0** `28 december 2020`: `{"wait": "_forTheSignal"}` removed. `_exit` replaced by `{"exit": <condition>}`, `{"gotoif": []}` replaced by `{"jumpif": []}`. Exit instruction is not supported by jumpif anymore.
 * **1.0.1** `28 november 2020` SOON: `{"wait": "_forTheSignal"}` will be removed. `_exit` will be replaced by `EXIT`. `_forPageToReload` will be replaced by `page-reload`
 * **1.0.0** `23 november 2020` the `next(message)` hook is added to add a asyncrousness to the states transition. If a state returns nothing, then the transition is not performed automatically. It will be necessary to call the refered function to run the transition.
