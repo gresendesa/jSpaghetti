@@ -5,7 +5,8 @@ const PAGE_IS_ABOUT_TO_RELOAD = "beforeunload"
 const SEQUENCE_TERMINATED = "terminated"
 const SEQUENCE_ERROR = "error"
 const SEQUENCE_RESET = "reset"
-const STORAGE_NAME = "\"jSpaghetti:\" + moduleName + \":\" + sequenceName"
+//const STORAGE_NAME = "\"jSpaghetti:\" + moduleName + \":\" + sequenceName"
+const STORAGE_NAME = (moduleName, sequenceName) => `"jSpaghetti: ${moduleName}:${sequenceName}`
 const EXIT_COMMAND = "exit"
 const GOTOIF_COMMAND = "jumpif"
 const WAIT_COMMAND = "wait"
@@ -203,7 +204,8 @@ function startStateSaver() {
 		jSpaghetti.state.ready = false
 		for(var moduleName in jSpaghetti.modules){
 			for(var sequenceName in jSpaghetti.modules[moduleName].sequences){
-				var localStorage = new jSpaghetti.Storage(eval(STORAGE_NAME))
+				//var localStorage = new jSpaghetti.Storage(eval(STORAGE_NAME))
+				var localStorage = new jSpaghetti.Storage(STORAGE_NAME(moduleName, sequenceName))
 				localStorage.set(jSpaghetti.modules[moduleName].sequences[sequenceName].state, function(){
 					//nothing
 				})
@@ -402,7 +404,8 @@ function runAssyncronously(callback){
 				if (currentModule.config.developerMode) showDebugMessage("Data recovered from the last state (" + moduleName + ":" + sequenceName + "): ", getObjectSnapshot(currentSequence.state))
 				runNextCommand(lastState)
 			} else { //If the last state is not avaiable then data is caught from storage
-				var localStorage = new jSpaghetti.Storage(eval(STORAGE_NAME)) //It sets the Storage object
+				//var localStorage = new jSpaghetti.Storage(eval(STORAGE_NAME)) //It sets the Storage object
+				var localStorage = new jSpaghetti.Storage(STORAGE_NAME(moduleName, sequenceName)) //It sets the Storage object
 				localStorage.get(function(data){
 					if(data){
 						if (currentModule.config.developerMode) showDebugMessage("Data recovered from the local storage (" + moduleName + ":" + sequenceName + "): ", getObjectSnapshot(data))
@@ -428,7 +431,8 @@ function runAssyncronously(callback){
 	setTimeout(function(){
 		var routeReset = new Route(0, 0)
 		currentSequence.state = new State(routeReset, {$: undefined}, null, false) //Reset sequence
-		var localStorage = new jSpaghetti.Storage(eval(STORAGE_NAME))
+		//var localStorage = new jSpaghetti.Storage(eval(STORAGE_NAME))
+		var localStorage = new jSpaghetti.Storage(STORAGE_NAME(moduleName, sequenceName))
 		localStorage.reset(function(){
 			if(callback)
 			callback(currentSequence)

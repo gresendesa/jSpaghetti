@@ -4,7 +4,8 @@ function startStateSaver() {
 		jSpaghetti.state.ready = false
 		for(var moduleName in jSpaghetti.modules){
 			for(var sequenceName in jSpaghetti.modules[moduleName].sequences){
-				var localStorage = new jSpaghetti.Storage(eval(STORAGE_NAME))
+				//var localStorage = new jSpaghetti.Storage(eval(STORAGE_NAME))
+				var localStorage = new jSpaghetti.Storage(STORAGE_NAME(moduleName, sequenceName))
 				localStorage.set(jSpaghetti.modules[moduleName].sequences[sequenceName].state, function(){
 					//nothing
 				})

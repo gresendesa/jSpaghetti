@@ -22,7 +22,8 @@ function(lastState){
 				if (currentModule.config.developerMode) showDebugMessage("Data recovered from the last state (" + moduleName + ":" + sequenceName + "): ", getObjectSnapshot(currentSequence.state))
 				runNextCommand(lastState)
 			} else { //If the last state is not avaiable then data is caught from storage
-				var localStorage = new jSpaghetti.Storage(eval(STORAGE_NAME)) //It sets the Storage object
+				//var localStorage = new jSpaghetti.Storage(eval(STORAGE_NAME)) //It sets the Storage object
+				var localStorage = new jSpaghetti.Storage(STORAGE_NAME(moduleName, sequenceName)) //It sets the Storage object
 				localStorage.get(function(data){
 					if(data){
 						if (currentModule.config.developerMode) showDebugMessage("Data recovered from the local storage (" + moduleName + ":" + sequenceName + "): ", getObjectSnapshot(data))
