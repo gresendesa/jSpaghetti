@@ -3,6 +3,7 @@
 const SEQUENCE_RELEASED = "sequenceReleased"
 const PAGE_IS_ABOUT_TO_RELOAD = "beforeunload"
 const SEQUENCE_TERMINATED = "terminated"
+const SEQUENCE_ERROR = "error"
 const SEQUENCE_RESET = "reset"
 const STORAGE_NAME = "\"jSpaghetti:\" + moduleName + \":\" + sequenceName"
 const EXIT_COMMAND = "exit"
@@ -123,8 +124,11 @@ function checkInstructionsSyntax(instructions, procedures){
 
 /*This function shows a custom message error on browser console*/
 /*This function shows a custom message error on browser console*/
-function throwErrorNotification(message, subject){
+function throwErrorNotification(message, subject, target, event){
 	console.error("jSpaghetti error:", message, subject)
+	if(target){
+		target.dispatchEvent(event)
+	}
 }
 
 /*This function show a custom message on browser console*/
@@ -358,25 +362,32 @@ function runAssyncronously(callback){
 				currentSequence.released = false
 				currentSequence.state.callLastProcedure = true
 				runAssyncronously(function(){
-					const value_returned = currentModule.procedures[currentCommand](currentSequence.state.shared, currentSequence.hooks) //It executes defined procedure strictly speaking
-					//If the functions returns nothing, then the next state is not called automatically
-					if(value_returned !== undefined){
-						//listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
-						currentSequence.state.callLastProcedure = false
-						currentSequence.state.shared.$ = value_returned
-						currentSequence.events.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED, currentSequence))
-					} else {
-						currentSequence.events.dispatchEvent(getEvent(SEQUENCE_RELEASED, currentSequence))
+					try {
+
+						const value_returned = currentModule.procedures[currentCommand](currentSequence.state.shared, currentSequence.hooks) //It executes defined procedure strictly speaking
+						//If the functions returns nothing, then the next state is not called automatically
+						if(value_returned !== undefined){
+							//listener.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED))
+							currentSequence.state.callLastProcedure = false
+							currentSequence.state.shared.$ = value_returned
+							currentSequence.events.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED, currentSequence))
+						} else {
+							currentSequence.events.dispatchEvent(getEvent(SEQUENCE_RELEASED, currentSequence))
+						}
+
+					} catch (error) {
+						let errorMessage = error + " (" + moduleName + ":" + sequenceName + ":" + currentInstruction + ":" + currentCommandInstructionPosition + ":" + currentCommand + ")"
+						throwErrorNotification(errorMessage, " ", currentSequence.events, getEvent(SEQUENCE_ERROR, errorMessage))
 					}
-					//} else {
-					//	currentSequence.state.callLastProcedure = true
-					//}
 				})
 				break
 		}
 		
 	} else {
-		if (resultSyntaxCheck !== true) throwErrorNotification(resultSyntaxCheck + " (" + moduleName + ":" + sequenceName + ")", " ")
+		if (resultSyntaxCheck !== true){
+			let errorMessage = resultSyntaxCheck + " (" + moduleName + ":" + sequenceName + ")"
+			throwErrorNotification(errorMessage, " ", currentSequence.events, getEvent(SEQUENCE_ERROR, errorMessage))
+		}
 		if (currentSequence.state.route == null) {
 			if (currentModule.config.debugMode) showDebugMessage("Sequence is terminated (" + moduleName + ":" + sequenceName + ")", " ")
 			currentSequence.events.dispatchEvent(getEvent(SEQUENCE_TERMINATED, currentSequence)) //It says that sequence is terminated

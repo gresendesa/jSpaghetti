@@ -3,6 +3,7 @@
 
 ## Changelog
 
+* **2.0.2** error event added.
 * **2.0.1** remove onload listener after sequence terminated.
 * **2.0.0** `28 december 2020`: `{"wait": "_forTheSignal"}` removed. `_exit` replaced by `{"exit": <condition>}`, `{"gotoif": []}` replaced by `{"jumpif": []}`. Exit instruction is not supported by jumpif anymore.
 * **1.0.1** `28 november 2020` SOON: `{"wait": "_forTheSignal"}` will be removed. `_exit` will be replaced by `EXIT`. `_forPageToReload` will be replaced by `page-reload`
@@ -120,11 +121,20 @@ $jSpaghetti.module("myModule").procedure("myProcedureBar", function(sharedData){
 ```
 
 ### Events
-The sequences return the "terminated" event when the sequence is done.
+The sequences return the "terminated" event when the sequence is done. All the events:
 ```js
-$jSpaghetti.module("myModule").procedure("myProcedureBar").events.addEventListener("terminated", function(){
+$jSpaghetti.module("myModule").procedure("myProcedureBar").events.addEventListener("terminated", function(e){
 	//Code something in here
 })
+
+$jSpaghetti.module("myModule").procedure("myProcedureBar").events.addEventListener("error", function(e){
+	console.log(e.detail)
+})
+
+$jSpaghetti.module("myModule").procedure("myProcedureBar").events.addEventListener("reset", function(e){
+	//Code something in here
+})
+
 ```
 
 ### Examples

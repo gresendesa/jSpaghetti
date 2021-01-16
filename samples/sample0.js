@@ -3,6 +3,7 @@ var module = $jSpaghetti.module("myModule")
 module.config.debugMode = true
 
 module.procedure("A", function(){
+    w
     console.log("brown fox jumps ")
     return true
 })
@@ -30,6 +31,19 @@ sequence.events.addEventListener("terminated", function(seq){
     console.log("terminated sequence data", seq)
 	sequence.reset()
 })
+
+sequence.events.addEventListener("error", function(seq){
+    console.log("error:", seq.detail)
+    sequence.reset()
+})
+
+const sequenceError = module.sequence('emptySequence')
+sequenceError.events.addEventListener("error", function(seq){
+    console.log("error:", seq.detail)
+    sequence.reset()
+})
+
 sequence.run()
+sequenceError.run()
 
 //Output: quick brown fox jumps over the lazy dog
