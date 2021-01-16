@@ -387,7 +387,7 @@ function runAssyncronously(callback){
 		if (resultSyntaxCheck !== true){
 			let errorMessage = resultSyntaxCheck + " (" + moduleName + ":" + sequenceName + ")"
 			throwErrorNotification(errorMessage, " ", currentSequence.events, getEvent(SEQUENCE_ERROR, errorMessage))
-		}
+		} else
 		if (currentSequence.state.route == null) {
 			if (currentModule.config.debugMode) showDebugMessage("Sequence is terminated (" + moduleName + ":" + sequenceName + ")", " ")
 			currentSequence.events.dispatchEvent(getEvent(SEQUENCE_TERMINATED, currentSequence)) //It says that sequence is terminated
