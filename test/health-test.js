@@ -1,27 +1,20 @@
 //====================================================//
 // test: module creating
-// it checks if module creating raises any error
+// it checks if environment creating raises any error
 //====================================================//
 let moduleCreating = function(data, hooks) {
-	let randomName = `module${Math.floor((Math.random() * 100) + 1)}`
-	var randomModule = $jSpaghetti.module(randomName)
-	let state = hooks.getState()
-	if(!state.data.ok){
-		console.log('reloading')
-		hooks.updateState({data: {ok: true}})
-		location.reload()
-	} else {
-		hooks.forward(randomModule)
-	}	
+	let { module, sequence } = getEnvironment('mod', 'seq')
+	console.log(module, sequence)
+	hooks.forward()
 }
 
 //====================================================//
 // test: sequence creating
 // it checks if sequence creating raises any error
 //====================================================//
-let sequenceCreating = function(mod, hooks) {
-	let randomName = `sequence${Math.floor((Math.random() * 100) + 1)}`
-	var randomSequence = mod.sequence(randomName)
+let sequenceCreating = function(data, hooks) {
+	let { module, sequence } = getEnvironment('mod', 'seq')
+	console.log(module, sequence)
 	hooks.forward()
 }
 

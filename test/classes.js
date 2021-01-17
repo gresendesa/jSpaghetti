@@ -137,7 +137,8 @@ class BrowserTester {
 		}
 
 		const updateStateHook = (object) => {
-			Object.assign(this.state, object)
+			//Object.assign(this.state, object)
+			this.state = Deep.merge(this.state, object)
 		}
 
 		const getStateHook = () => {

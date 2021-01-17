@@ -20,7 +20,8 @@ sequence.events.addEventListener("terminated", function(seq){
 sequence.run()
 
 setTimeout(() => {
-    sequence.events.dispatchEvent(new Event("SEQUENCE_TERMINATED"))
+	console.log('sending SEQUENCE_TERMINATED event...')
+    sequence.events.dispatchEvent(new Event("terminated"))
 },5000)
 
 //Output: quick brown fox jumps over the lazy dog

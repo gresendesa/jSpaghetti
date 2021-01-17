@@ -152,19 +152,45 @@ function evaluateExpression(expression, shared){
 function getSharedFunctions(moduleName, sequenceName){
 	return{
 		next: function(message){
+			const currentSequence = jSpaghetti.modules[moduleName].sequences[sequenceName]
+			currentSequence.blocked = true
 			const callback = () => {
+				currentSequence.blocked = false
 				if (jSpaghetti.modules[moduleName].config.debugMode) showDebugMessage("Next called (" + moduleName + ":" + sequenceName + "): ", message)
-				//jSpaghetti.modules[moduleName].sequences[sequenceName].state.callLastProcedure = false
-				//jSpaghetti.modules[moduleName].sequences[sequenceName].state.shared.$ = message
-				jSpaghetti.modules[moduleName].sequences[sequenceName].events.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED, jSpaghetti.modules[moduleName].sequences[sequenceName]))
+				currentSequence.events.dispatchEvent(getEvent(LAST_COMMAND_TERMINATED, currentSequence))
 			}
-			jSpaghetti.modules[moduleName].sequences[sequenceName].state.callLastProcedure = false
-			jSpaghetti.modules[moduleName].sequences[sequenceName].state.shared.$ = message
-			if(jSpaghetti.modules[moduleName].sequences[sequenceName].released){
+			currentSequence.state.callLastProcedure = false
+			currentSequence.state.shared.$ = message
+			if(currentSequence.released){
 				callback()
 			} else {
 				const interval = setInterval(() => {
-					if(jSpaghetti.modules[moduleName].sequences[sequenceName].released){
+					if(currentSequence.released){
+						clearInterval(interval)
+						callback()
+					}
+				}, DEFAULT_DELAY * 5)
+			}
+		},
+		raise: function(message){
+			const currentSequence = jSpaghetti.modules[moduleName].sequences[sequenceName]
+			currentSequence.blocked = true
+			const callback = () => {
+				let currentSequence = jSpaghetti.modules[moduleName].sequences[sequenceName]
+				currentSequence.blocked = false
+				if (jSpaghetti.modules[moduleName].config.debugMode) showDebugMessage("Error raised (" + moduleName + ":" + sequenceName + "): ", message)
+				//const currentCommand = getCommandByRoute(currentSequence.instructions, currentSequence.state.route)
+				//const currentCommandInstructionPosition = currentSequence.state.route.command
+				//const currentInstruction = getInstructionByRoute(currentSequence.instructions, currentSequence.state.route).label
+				//let errorMessage = message + " (" + moduleName + ":" + sequenceName + ":" + currentInstruction + ":" + currentCommandInstructionPosition + ":" + currentCommand + ")"
+				let errorMessage = message + " (" + moduleName + ":" + sequenceName + ")"
+				currentSequence.events.dispatchEvent(getEvent(SEQUENCE_ERROR, errorMessage))
+			}
+			if(currentSequence.released){
+				callback()
+			} else {
+				const interval = setInterval(() => {
+					if(currentSequence.released){
 						clearInterval(interval)
 						callback()
 					}
@@ -254,6 +280,7 @@ function runAssyncronously(callback){
 		events: document.createDocumentFragment(),
 		state: initialState,
 		released: true,
+		blocked: false,//The sequence is blocked when some hook gets the sequence focus to itself
 		instructions: [],
 		run: function(lastState){
 	setTimeout(function(){
@@ -445,14 +472,24 @@ function runAssyncronously(callback){
 
 	sequence.events.addEventListener(LAST_COMMAND_TERMINATED, (event) => { //It listens for last command terminated event
 		event.stopPropagation()
-		currentModule.sequences[sequenceName].events.dispatchEvent(getEvent(SEQUENCE_RELEASED, currentModule.sequences[sequenceName]))
 		if (currentModule.config.developerMode) showDebugMessage("Last command terminated event dispatched (" + moduleName + ":" + sequenceName + "): ", getObjectSnapshot(currentSequence.state))
-		currentModule.sequences[sequenceName].run(currentSequence.state)
+		if(!currentSequence.blocked){
+			currentModule.sequences[sequenceName].run(currentSequence.state)
+		} else {
+			if (currentModule.config.developerMode) showDebugMessage("The sequence is currently blocked. Running next state was skipped (" + moduleName + ":" + sequenceName + "): ", getObjectSnapshot(currentSequence.state))
+		}
+		currentModule.sequences[sequenceName].events.dispatchEvent(getEvent(SEQUENCE_RELEASED, currentModule.sequences[sequenceName]))
 	})
 
 	sequence.events.addEventListener(SEQUENCE_RELEASED, (event) => { //It listens for last command terminated event
 		event.stopPropagation()
 		if (currentModule.config.developerMode) showDebugMessage("Procedure released event dispatched (" + moduleName + ":" + sequenceName + "): ", getObjectSnapshot(currentSequence.state))
+		currentModule.sequences[sequenceName].released = true
+	})
+
+	sequence.events.addEventListener(SEQUENCE_TERMINATED, (event) => { //It listens for last command terminated event
+		event.stopPropagation()
+		if (currentModule.config.developerMode) showDebugMessage("Sequence terminated event dispatched (" + moduleName + ":" + sequenceName + "): ", getObjectSnapshot(currentSequence.state))
 		currentModule.sequences[sequenceName].released = true
 	})
 
