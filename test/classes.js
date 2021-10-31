@@ -131,6 +131,10 @@ class BrowserTester {
 
 	executeNextSubject(value) {
 
+		const notifyError = function(message) {
+			Test.page.publicFailure({ text: `${'error'} => ${message}` })
+		}
+
 		const forwardHook = (value) => {
 			if(typeof this.subjects[this.state.cursor+1] === 'undefined'){
 				this.finish()
@@ -152,7 +156,8 @@ class BrowserTester {
 
 		const runSubject = ({ cursor, subjects, payload }) => {
 			let test = new Test(subjects[cursor], this)
-			let hooks = { 
+			let hooks = {
+				notifyError: notifyError,
 				forward: forwardHook, 
 				updateState: updateStateHook, 
 				getState: getStateHook 

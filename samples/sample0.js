@@ -3,7 +3,6 @@ var module = $jSpaghetti.module("myModule")
 module.config.debugMode = true
 
 module.procedure("A", function(){
-    w
     console.log("brown fox jumps ")
     return true
 })

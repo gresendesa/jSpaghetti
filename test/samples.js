@@ -13,7 +13,7 @@ function getSample(name){
 
 const samples = [
 
-	({ name='sample0' }) => { 
+	({ name='sampleClear' }) => { 
 		let sample = $jSpaghetti.module(name)
 		sample.config.debugMode = true
 		//var sequence = sample.sequence(sequenceName)

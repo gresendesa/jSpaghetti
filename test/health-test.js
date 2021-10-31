@@ -4,27 +4,31 @@
 //====================================================//
 const moduleSequenceAndProcedureTest = function(data, tester) {
 	
-
-	const sampleModule = getSample('sample0')
+	const sampleModule = getSample('sampleClear')
 	sampleModule.procedure("proc0", function(shared, hooks){
-		shared.payload = 'yo'
 	    return true
 	})
 
-	var sequence = sampleModule.sequence("basic")
+	const sequenceName = `sequence${Math.floor((Math.random() * 9999999) + 1)}`
 
+	const sequence = sampleModule.sequence(sequenceName)
 	sequence.instructions = [
 	    {0: "proc0"}
 	]
 
-	sequence.events.addEventListener("terminated", function(event){
-		sequence.reset(() => {
-			console.log('reseted')
-			tester.forward()
+	sequence.reset(() => {
+		sequence.run()
+		sequence.events.addEventListener("terminated", function(event){
+			if(event.detail.name !== sequenceName){
+				tester.notifyError('sequence name diverges')
+				return
+			}
+			sequence.reset(() => {
+				tester.forward()
+			})
 		})
 	})
-
-	sequence.run()
+	
 }
 
 //====================================================//
