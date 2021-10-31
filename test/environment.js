@@ -12,9 +12,6 @@ function getEnvironment(moduleName, sequenceName) {
 }
 
 
-
-
-
 /*sequence.events.addEventListener("terminated", function(){
 	sequence.reset()
 })
