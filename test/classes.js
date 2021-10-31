@@ -32,20 +32,24 @@ class Test {
 
 	static page = new TestPage()
 
-	constructor(subject) {
+	constructor(subject, tester) {
 		this.subject = subject
-		Test.page.publicInfo({ text: `running test ${this.subject.name}` })
+		this.subjectOrder = 1 + tester.subjects.findIndex((element, index, array) => {
+			return subject === element
+		})
+		this.testerSubjectsAmount = tester.subjects.length
+		Test.page.publicInfo({ text: `running test ${this.subject.name} [${this.subjectOrder}/${this.testerSubjectsAmount}]` })
 	}
 
 	run(payload, hooks) {
 		try {
-			console.warn(`RUNNING SUBJECT [${this.subject.name}]`, 'payload', payload)
+			console.warn(`RUNNING SUBJECT [${this.subject.name}] [${this.subjectOrder}/${this.testerSubjectsAmount}]`, 'payload', payload)
 			const value = this.subject(payload, hooks)
-			Test.onSuccess({ message: `success on ${this.subject.name}` })
+			Test.onSuccess({ message: `success on ${this.subject.name} [${this.subjectOrder}/${this.testerSubjectsAmount}]` })
 			return value
 		} catch (e) {
-			Test.onFailure({ label: `error on ${this.subject.name}`, message: e })
-			throw new Error(`error on test ${this.subject.name}`)
+			Test.onFailure({ label: `error on ${this.subject.name} [${this.subjectOrder}/${this.testerSubjectsAmount}]`, message: e })
+			throw new Error(`error on test ${this.subject.name} [${this.subjectOrder}/${this.testerSubjectsAmount}]`)
 		}
 	}
 
@@ -146,8 +150,8 @@ class BrowserTester {
 		}
 
 
-		const runSubject = function({ cursor, subjects, payload }){
-			let test = new Test(subjects[cursor])
+		const runSubject = ({ cursor, subjects, payload }) => {
+			let test = new Test(subjects[cursor], this)
 			let hooks = { 
 				forward: forwardHook, 
 				updateState: updateStateHook, 
