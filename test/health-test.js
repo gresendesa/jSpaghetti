@@ -2,7 +2,7 @@
 // test: module creating
 // it checks if environment creating raises any error
 //====================================================//
-const moduleSequenceAndProcedureDefaultOutputTest = function(data, tester) {
+const procedureBasic = function(data, tester) {
 	
 	const sampleModule = getSample('sampleClear')
 
@@ -10,6 +10,7 @@ const moduleSequenceAndProcedureDefaultOutputTest = function(data, tester) {
 	const randomText = `text${Math.floor((Math.random() * 9999999) + 1)}`
 
 	sampleModule.procedure("proc0", function(shared, hooks){
+		shared.counter = 1
 	    return randomText
 	})
 
@@ -23,6 +24,7 @@ const moduleSequenceAndProcedureDefaultOutputTest = function(data, tester) {
 		sequence.events.addEventListener("terminated", function(event){
 			if(tester.observedValueDiverges('sequence name diverges', sequenceName, event.detail.name)) return
 			if(tester.observedValueDiverges('default return diverges', randomText, event.detail.state.shared.$)) return
+			if(tester.observedValueDiverges('some procedure are being executed multiple times', 1, event.detail.state.shared.counter)) return
 			sequence.reset(() => {
 				tester.forward()
 			})
@@ -44,7 +46,7 @@ const sequenceCreating = function(data, tester) {
 }
 
 let subjects = [
-	moduleSequenceAndProcedureDefaultOutputTest,
+	procedureBasic,
 	sequenceCreating
 ]
 

@@ -16,15 +16,13 @@ const samples = [
 	({ name='sampleClear' }) => { 
 		let sample = $jSpaghetti.module(name)
 		sample.config.debugMode = true
-		//var sequence = sample.sequence(sequenceName)
 		return { name, sample }
 	},
 
 
-	({ name='sample1' }) => {
+	({ name='sampleCore' }) => {
 		let sample = $jSpaghetti.module(name)
 		sample.config.debugMode = true
-		//var sequence = sample.sequence(sequenceName)
 		return { name, sample }
 	}
 
