@@ -131,8 +131,17 @@ class BrowserTester {
 
 	executeNextSubject(value) {
 
-		const notifyError = function(message) {
-			Test.page.publicFailure({ text: `${'error'} => ${message}` })
+		const notifyFailure = (description, expectedValue, foundValue) => {
+			Test.page.publicFailure({ text: `${'failure'}: ${description}. Expected "${expectedValue}" but "${foundValue}" as found instead` })
+			this.finish()
+		}
+
+		const observedValueDiverges = (description, expectedValue, foundValue) => {
+			if(expectedValue !== foundValue){
+				notifyFailure(description, expectedValue, foundValue)
+				return true
+			}
+			return false
 		}
 
 		const forwardHook = (value) => {
@@ -157,7 +166,8 @@ class BrowserTester {
 		const runSubject = ({ cursor, subjects, payload }) => {
 			let test = new Test(subjects[cursor], this)
 			let hooks = {
-				notifyError: notifyError,
+				notifyFailure: notifyFailure,
+				observedValueDiverges: observedValueDiverges,
 				forward: forwardHook, 
 				updateState: updateStateHook, 
 				getState: getStateHook 

@@ -2,14 +2,16 @@
 // test: module creating
 // it checks if environment creating raises any error
 //====================================================//
-const moduleSequenceAndProcedureTest = function(data, tester) {
+const moduleSequenceAndProcedureDefaultOutputTest = function(data, tester) {
 	
 	const sampleModule = getSample('sampleClear')
-	sampleModule.procedure("proc0", function(shared, hooks){
-	    return true
-	})
 
 	const sequenceName = `sequence${Math.floor((Math.random() * 9999999) + 1)}`
+	const randomText = `text${Math.floor((Math.random() * 9999999) + 1)}`
+
+	sampleModule.procedure("proc0", function(shared, hooks){
+	    return randomText
+	})
 
 	const sequence = sampleModule.sequence(sequenceName)
 	sequence.instructions = [
@@ -19,10 +21,8 @@ const moduleSequenceAndProcedureTest = function(data, tester) {
 	sequence.reset(() => {
 		sequence.run()
 		sequence.events.addEventListener("terminated", function(event){
-			if(event.detail.name !== sequenceName){
-				tester.notifyError('sequence name diverges')
-				return
-			}
+			if(tester.observedValueDiverges('sequence name diverges', sequenceName, event.detail.name)) return
+			if(tester.observedValueDiverges('default return diverges', randomText, event.detail.state.shared.$)) return
 			sequence.reset(() => {
 				tester.forward()
 			})
@@ -36,12 +36,15 @@ const moduleSequenceAndProcedureTest = function(data, tester) {
 // it checks if sequence creating raises any error
 //====================================================//
 const sequenceCreating = function(data, tester) {
-	const { module, sequence } = getEnvironment('mod', 'seq')
+	const sampleModule = getSample('sampleClear')
+	sampleModule.procedure("proc0", function(shared, hooks){
+	    return true
+	})
 	tester.forward()
 }
 
 let subjects = [
-	moduleSequenceAndProcedureTest,
+	moduleSequenceAndProcedureDefaultOutputTest,
 	sequenceCreating
 ]
 
